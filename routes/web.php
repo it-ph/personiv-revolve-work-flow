@@ -11,6 +11,25 @@
 |
 */
 
+// Route::get('/', function () {
+//     return view('welcome');
+// });
+
 Route::get('/', function () {
-    return view('welcome');
+	if (Auth::check()) {
+		return redirect('/home');
+    }
+    return view('auth.login');
+});
+
+Auth::routes();
+
+Route::get('/home', 'HomeController@index');
+
+Route::get('/register', function(){
+	return redirect('/');
+});
+
+Route::post('/register', function(){
+	return redirect('/');
 });
