@@ -6,7 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
-class DesignerTaskController extends Controller
+class QualityControlAssignedController extends Controller
 {
     /**
      * Display a listing of the resource.

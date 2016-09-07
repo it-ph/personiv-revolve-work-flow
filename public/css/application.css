@@ -3,7 +3,8 @@
 /* mixin to call specific animation */
 body {
   font-family: 'Roboto', sans-serif;
-  overflow: hidden; }
+  overflow: hidden;
+  background: #e9ebee; }
 
 a:hover {
   text-decoration: none;
@@ -16,13 +17,14 @@ a:focus {
 .mdi {
   font-size: 24px;
   vertical-align: middle;
-  color: white; }
+  color: white;
+  line-height: 1; }
 
 .md-mini .mdi {
   font-size: 21px; }
 
 .mdi.grey {
-  color: #727272; }
+  color: #727272 !important; }
 
 .mdi.accent {
   color: #7C4DFF; }
@@ -96,8 +98,12 @@ md-toolbar.white-toolbar {
   background-color: white; }
 
 .site-logo img {
-  max-width: 35%;
-  max-height: 100%; }
+  /*max-width: 35%;
+		max-height: 100%;*/
+  width: 200px; }
+
+.site-logo.page-not-found {
+  width: 80px; }
 
 .personiv-logo {
   height: 110px; }

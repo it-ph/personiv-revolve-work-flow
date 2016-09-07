@@ -4,7 +4,7 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Database\Migrations\Migration;
 
-class CreateDesignerTaskTable extends Migration
+class CreateDesignerAssignedTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,12 +13,15 @@ class CreateDesignerTaskTable extends Migration
      */
     public function up()
     {
-        Schema::create('designer_task', function (Blueprint $table) {
+        Schema::create('designer_assigned', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('task_id')->unsigned();
             $table->integer('designer_id')->unsigned();
+            $table->dateTime('time_start')->nullable();
+            $table->dateTime('time_end')->nullable();
             $table->integer('minutes_spent')->unsigned()->nullable();
             $table->timestamps();
+            // $table->softDeletes();
         });
     }
 
@@ -29,6 +32,6 @@ class CreateDesignerTaskTable extends Migration
      */
     public function down()
     {
-        Schema::dropIfExists('designer_task');
+        Schema::dropIfExists('designer_assigned');
     }
 }

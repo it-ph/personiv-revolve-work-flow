@@ -1,0 +1,40 @@
+<md-content>
+    <div layout="column" layout-align="center center">
+        <h2 class="md-headline">{{ user.name }}</h2>
+        <h3 class="md-subhead">{{ user.email }}</h3>
+    </div>
+    <md-divider></md-divider>
+    <ul class="no-padding">
+        <li layout="row" flex ng-repeat="page in menu.static">
+            <md-button class="static" flex ui-sref="{{page.state}}">
+                <div layout="row" flex>
+                    <md-icon class="mdi {{page.icon}} grey"></md-icon>
+                    <span flex="5"></span>
+                    <span flex class="left-text secondary-text">{{page.label}}</span>
+                </div>
+            </md-button>
+        </li>
+    </ul>
+    <md-divider></md-divider>
+    <md-subheader class="md-no-sticky">Account Settings</md-subheader>
+    <li layout="row" flex>
+        <md-button flex ng-click="changePassword()">
+            <div layout="row" flex>
+                <md-icon class="mdi mdi-key-change grey"></md-icon>
+                <span flex="5"></span>
+                <span class="secondary-text">Change Password</span>
+                <span flex></span>
+            </div>
+        </md-button>
+    </li>
+    <li layout="row" flex>
+        <md-button flex ng-click="logout()">
+            <div layout="row" flex>
+                <md-icon class="mdi mdi-logout grey"></md-icon>
+                <span flex="5"></span>
+                <span class="secondary-text">Logout</span>
+                <span flex></span>
+            </div>
+        </md-button>
+    </li>
+</md-content>

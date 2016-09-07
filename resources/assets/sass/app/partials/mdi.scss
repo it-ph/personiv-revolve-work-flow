@@ -2,6 +2,7 @@
 	font-size: 24px;
 	vertical-align: middle;
 	color: white;
+	line-height: 1;
 }
 
 .md-mini .mdi{
@@ -9,7 +10,7 @@
 }
 
 .mdi.grey{
-	color: $secondary-text;
+	color: $secondary-text !important;
 }
 
 .mdi.accent{

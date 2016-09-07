@@ -27,8 +27,13 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    public function tasks()
+    public function assignment()
     {
-        return $this->belongsToMany('App\Task');
+        return $this->hasMany('App\Assignment');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany('App\Comment');
     }
 }

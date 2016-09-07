@@ -1,7 +1,8 @@
 <!DOCTYPE html>
-<html lang="en" ng-app="{{user->role}}">
+<html lang="en" ng-app="{{$user->role}}">
 <head>
 	<meta charset="UTF-8">
+	<meta name="theme-color" content="#2196F3" />
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Revolve Tracker | Personiv</title>
 	<!-- Favicon -->
@@ -18,7 +19,9 @@
 	<div class="main-view" ui-view></div>
 	<!-- Vendor Scripts -->
 	<script src="/js/vendor.js"></script>
-	<!-- {{user->role}} Script -->
-	<script src="/js/{{user->role}}.js"></script>
+	<!-- Shared Scripts -->
+	<script src="/js/shared.js"></script>
+	<!-- {{$user->role}} Script -->
+	<script src="/js/{{$user->role}}.js"></script>
 </body>
 </html>

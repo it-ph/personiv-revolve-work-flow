@@ -21,8 +21,13 @@ class Task extends Model
     	return $this->belongsTo('App\Spreadsheet');
     }
 
-    public function designer()
+    public function assignment()
     {
-    	return $this->belongsToMany('App\User', 'designer_id');
+    	return $this->hasOne('App\Assignment');
+    }
+
+    public function comments()
+    {
+        return $this->hasMany('App\Comment');
     }
 }

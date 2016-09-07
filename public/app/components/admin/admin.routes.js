@@ -5,56 +5,22 @@ adminModule
 				url: '/',
 				views: {
 					'': {
-						templateUrl: '/app/components/admin/views/main.view.html',
+						templateUrl: '/app/shared/views/main.view.html',
 						controller: 'mainViewController',
 					},
-					'left-sidenav@main': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left.sidenav.html',
-						controller: 'leftSidenavController',
+					'content-container@main': {
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'dashboardContentContainerController',
 					},
 					'toolbar@main': {
-						templateUrl: '/app/components/admin/templates/toolbar.template.html',
+						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
-					'content-container@main': {
-						templateUrl: '/app/components/admin/views/content-container.view.html',
-						controller: 'mainContentContainerController',
+					'left-sidenav@main': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
 					},
-					'content@main': {
-						templateUrl: '/app/components/admin/templates/content/main.content.template.html',
-					},
-					'right-sidenav@main': {
-						templateUrl: '/app/components/admin/templates/sidenavs/dashboard-right-sidenav.template.html',
+					'content@main':{
+						templateUrl: '/app/components/admin/templates/content/content.template.html',
 					}
-				},
-				onExit: ['$mdSidenav', function($mdSidenav){
-					var leftSidenav = $('[md-component-id="left"]');
-					if(leftSidenav.hasClass('md-closed') && leftSidenav.hasClass('md-locked-open')){
-						return;
-					}
-					$mdSidenav('left').toggle();
-				}],
-			})
-
-			.state('main.settings', {
-				url: 'settings',
-				views: {
-					'content-container': {
-						templateUrl: '/app/components/admin/views/content-container.view.html',
-						controller: 'settingsContentContainerController',
-					},
-					'toolbar@main.settings': {
-						templateUrl: '/app/components/admin/templates/toolbar.template.html',
-					},
-					'content@main.settings': {
-						templateUrl: '/app/components/admin/templates/content/settings.content.template.html',
-					},
-				},
-				onExit: ['$mdSidenav', function($mdSidenav){
-					var leftSidenav = $('[md-component-id="left"]');
-					if(leftSidenav.hasClass('md-closed') && leftSidenav.hasClass('md-locked-open')){
-						return;
-					}
-					$mdSidenav('left').toggle();
-				}],
+				}
 			})
 	}]);

@@ -3,10 +3,15 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+// use Illuminate\Database\Eloquent\SoftDeletes;
 
-class DesignerTask extends Model
+class DesignerAssigned extends Model
 {
-    protected $table = 'designer_task';
+	// use SoftDeletes;
+
+    protected $table = 'designer_assigned';
+
+    // protected $dates = ['deleted_at'];
 
     public function designer()
     {
@@ -16,5 +21,5 @@ class DesignerTask extends Model
 	public function task()
     {
     	return $this->belongsTo('App\Task');
-    }    
+    }
 }

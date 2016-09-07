@@ -16,7 +16,10 @@ class CreateReworksTable extends Migration
         Schema::create('reworks', function (Blueprint $table) {
             $table->increments('id');
             $table->integer('task_id')->unsigned();
-            $table->dateTime('minutes_spent')->unsigned()->nullable();
+            $table->integer('designer_id')->unsigned();
+            $table->dateTime('time_start')->nullable();
+            $table->dateTime('time_end')->nullable();
+            $table->integer('minutes_spent')->unsigned()->nullable();
             $table->timestamps();
         });
     }

@@ -77,8 +77,13 @@ md-toolbar.white-toolbar {
 
 .site-logo {
 	img{
-		max-width: 35%;
-		max-height: 100%;
+		/*max-width: 35%;
+		max-height: 100%;*/
+		width: 200px;
+	}
+
+	&.page-not-found{
+		width: 80px;
 	}
 }
 

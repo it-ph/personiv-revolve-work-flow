@@ -18,8 +18,8 @@
 	<div class="main-view no-opacity" ng-controller="homePageController" ng-init="show()" id="main">
 		<md-content flex layout="column" layout-align="center center" class="full-height-min main-content">
 			<a href="/">
-				<img show-gt-md hide-md hide-sm src="/img/Personiv-Final_white_transparent.png" alt="Personiv Logo" class="personiv-logo">
-				<img show-sm show-md hide-gt-md src="/img/Personiv-icon_large-white.png" alt="" class="personiv-logo">
+				<img show-gt-md hide-md hide-sm hide-xs src="/img/Personiv-Final_white_transparent.png" alt="Personiv Logo" class="personiv-logo">
+				<img show-xs show-sm show-md hide-gt-md src="/img/Personiv-icon_large-white.png" alt="" class="personiv-logo">
 			</a>
 			<br>
 			@if (count($errors) > 0)
