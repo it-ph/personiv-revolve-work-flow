@@ -2,8 +2,8 @@ sharedModule
 	.config(['$urlRouterProvider', '$stateProvider', '$mdThemingProvider', function($urlRouterProvider, $stateProvider, $mdThemingProvider){
 		/* Defaul Theme Blue - Light Blue */
 		$mdThemingProvider.theme('default')
-			.primaryPalette('blue')
-			.accentPalette('deep-purple')
+			.primaryPalette('light-blue')
+			.accentPalette('pink')
 		
 		/* Dark Theme - Blue */
 		$mdThemingProvider.theme('dark', 'default')

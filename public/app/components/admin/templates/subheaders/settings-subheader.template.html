@@ -1,0 +1,32 @@
+<div class="md-toolbar-tools">
+	<md-nav-bar md-selected-nav-item="subheader.currentNavItem" flex class="md-primary">
+	    <md-nav-item ng-repeat="nav in subheader.navs" md-nav-click="nav.action()" name="{{nav.label}}">{{nav.label}}</md-nav-item>
+	</md-nav-bar>
+</div>
+<!-- Icons -->
+<md-subheader ng-if="type.items.length">
+	<md-button class="md-icon-button" ng-click="init(subheader.currentNavItem, true)">
+		<md-icon class="mdi grey mdi-refresh"></md-icon>
+		<md-tooltip>Refresh</md-tooltip>
+	</md-button>
+	<!-- Filters -->
+	<md-menu>
+        <md-button aria-label="Open filters" class="md-icon-button" ng-click="$mdOpenMenu($event)">
+            <md-icon class="mdi mdi-filter grey"></md-icon>
+            <md-tooltip>Filters</md-tooltip>
+        </md-button>
+        <md-menu-content width="4">
+            <!-- <md-subheader>Filters</md-subheader> -->
+            <md-menu-item ng-repeat="filter in subheader.filters">
+              	<md-button flex ng-click="subheader.sortBy(filter)">
+              		<div layout="row">
+	                	<span>{{filter.label}}</span>
+	                	<span flex></span>
+	                	<md-icon ng-show="!filter.sortReverse" class="mdi mdi-chevron-down grey"></md-icon>
+						<md-icon ng-show="filter.sortReverse" class="mdi mdi-chevron-up grey"></md-icon>
+              		</div>
+              	</md-button>
+            </md-menu-item>
+        </md-menu-content>
+    </md-menu>
+</md-subheader>

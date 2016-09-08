@@ -23,4 +23,25 @@ adminModule
 					}
 				}
 			})
+			.state('main.settings', {
+				url: 'settings',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'settingsContentContainerController',
+					},
+					'toolbar@main.settings': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.settings': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'subheader@main.settings': {
+						templateUrl: '/app/components/admin/templates/subheaders/settings-subheader.template.html',
+					},
+					'content@main.settings':{
+						templateUrl: '/app/components/admin/templates/content/settings-content.template.html',
+					},
+				}
+			})
 	}]);

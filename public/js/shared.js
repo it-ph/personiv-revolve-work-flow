@@ -10,8 +10,8 @@ sharedModule
 	.config(['$urlRouterProvider', '$stateProvider', '$mdThemingProvider', function($urlRouterProvider, $stateProvider, $mdThemingProvider){
 		/* Defaul Theme Blue - Light Blue */
 		$mdThemingProvider.theme('default')
-			.primaryPalette('blue')
-			.accentPalette('deep-purple')
+			.primaryPalette('light-blue')
+			.accentPalette('pink')
 		
 		/* Dark Theme - Blue */
 		$mdThemingProvider.theme('dark', 'default')
@@ -45,31 +45,28 @@ sharedModule
 		}
 
 		$scope.submit = function(){
-			// $scope.showErrors = true;
-			$scope.preload = true;
-
-			// if($scope.changePasswordForm.$invalid){
-			// 	angular.forEach($scope.changePasswordForm.$error, function(field){
-			// 		angular.forEach(field, function(errorField){
-			// 			errorField.$setTouched();
-			// 		});
-			// 	});
-			// }
-			// else if($scope.password.old == $scope.password.new || $scope.password.new != $scope.password.confirm)
-			// {
-			// 	return;
-			// }
-			// else {
-			// 	$scope.preload = true;
-
-			// 	User.changePassword($scope.password)
-			// 		.success(function(){
-			// 			Preloader.stop();
-			// 		})
-			// 		.error(function(){
-			// 			Preloader.error();
-			// 		});
-			// }
+			$scope.showErrors = true;
+			if($scope.changePasswordForm.$invalid){
+				angular.forEach($scope.changePasswordForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+			}
+			else if($scope.password.old == $scope.password.new || $scope.password.new != $scope.password.confirm)
+			{
+				return;
+			}
+			else {
+				$scope.busy = true;
+				User.changePassword($scope.password)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
 		}
 	}]);
 sharedModule
@@ -321,6 +318,9 @@ sharedModule
 			resetPassword: function(id){
 				return $http.get(urlBase + '-reset-password/' + id);
 			},
+			paginate: function(page){
+				return $http.get(urlBase + '-paginate?page=' + page);
+			},
 		}
 	}]);
 sharedModule
@@ -329,6 +329,15 @@ sharedModule
 		var user = null;
 
 		return {
+			/* Notifies a user with a message */
+			notify: function(message){
+				return $mdToast.show(
+			    	$mdToast.simple()
+				        .textContent(message)
+				        .position('bottom right')
+				        .hideDelay(3000)
+			    );
+			},
 			/* Starts the preloader */
 			preload: function(){
 				return $mdDialog.show({
@@ -360,22 +369,16 @@ sharedModule
 			get: function(){
 				return dataHolder;
 			},
-			toastChangesSaved: function(){
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent('Changes saved.')
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
-			},
-			deleted: function(){
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent('Deleted')
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
-			},
 		};
+	}]);
+sharedModule
+	.service('Setting', ['$http', function($http){
+		return {
+			paginate: function(type, page){
+				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : 'user-designers');
+
+				return $http.get(urlBase + '-paginate?page=' + page);
+			},
+		}
 	}]);
 //# sourceMappingURL=shared.js.map

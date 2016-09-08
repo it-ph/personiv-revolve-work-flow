@@ -17,7 +17,7 @@ a:focus {
 .mdi {
   font-size: 24px;
   vertical-align: middle;
-  color: white;
+  color: white !important;
   line-height: 1; }
 
 .md-mini .mdi {
@@ -27,10 +27,10 @@ a:focus {
   color: #727272 !important; }
 
 .mdi.accent {
-  color: #7C4DFF; }
+  color: #FF4081; }
 
 .mdi.primary {
-  color: #2196F3; }
+  color: #03A9F4; }
 
 .mdi.baseline {
   vertical-align: baseline; }
@@ -38,11 +38,11 @@ a:focus {
 /* Text Colors Classes */
 .primary-text {
   /* Blue */
-  color: #2196F3; }
+  color: #03A9F4; }
 
 .accent-text {
   /* Deep Purple */
-  color: #7C4DFF; }
+  color: #FF4081; }
 
 .white-text {
   /* White */
@@ -128,7 +128,7 @@ md-content.dirty-white {
   background: #e9ebee; }
 
 .primary-bg {
-  background: #2196F3; }
+  background: #03A9F4; }
 
 .orange-bg {
   background: #FF9800; }
@@ -230,6 +230,11 @@ md-content.dirty-white {
   font-size: 12px;
   color: #F44336;
   margin: 10px 0 0 25px; }
+
+.avatar {
+  border-radius: 50%;
+  width: 200px;
+  height: 200px; }
 
 /* transition duration */
 .transition, .fade-transition, .main-view {

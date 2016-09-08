@@ -15,30 +15,27 @@ sharedModule
 		}
 
 		$scope.submit = function(){
-			// $scope.showErrors = true;
-			$scope.preload = true;
-
-			// if($scope.changePasswordForm.$invalid){
-			// 	angular.forEach($scope.changePasswordForm.$error, function(field){
-			// 		angular.forEach(field, function(errorField){
-			// 			errorField.$setTouched();
-			// 		});
-			// 	});
-			// }
-			// else if($scope.password.old == $scope.password.new || $scope.password.new != $scope.password.confirm)
-			// {
-			// 	return;
-			// }
-			// else {
-			// 	$scope.preload = true;
-
-			// 	User.changePassword($scope.password)
-			// 		.success(function(){
-			// 			Preloader.stop();
-			// 		})
-			// 		.error(function(){
-			// 			Preloader.error();
-			// 		});
-			// }
+			$scope.showErrors = true;
+			if($scope.changePasswordForm.$invalid){
+				angular.forEach($scope.changePasswordForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+			}
+			else if($scope.password.old == $scope.password.new || $scope.password.new != $scope.password.confirm)
+			{
+				return;
+			}
+			else {
+				$scope.busy = true;
+				User.changePassword($scope.password)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
 		}
 	}]);

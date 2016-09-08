@@ -5,9 +5,20 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 
 use App\Http\Requests;
+use App\Category;
 
 class CategoryController extends Controller
 {
+    /**
+     * Display a paginated listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function paginate()
+    {
+        return Category::withTrashed()->orderBy('created_at', 'desc')->paginate(20);
+    }
+
     /**
      * Display a listing of the resource.
      *

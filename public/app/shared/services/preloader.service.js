@@ -4,6 +4,15 @@ sharedModule
 		var user = null;
 
 		return {
+			/* Notifies a user with a message */
+			notify: function(message){
+				return $mdToast.show(
+			    	$mdToast.simple()
+				        .textContent(message)
+				        .position('bottom right')
+				        .hideDelay(3000)
+			    );
+			},
 			/* Starts the preloader */
 			preload: function(){
 				return $mdDialog.show({
@@ -34,22 +43,6 @@ sharedModule
 			/* Retrieves data */
 			get: function(){
 				return dataHolder;
-			},
-			toastChangesSaved: function(){
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent('Changes saved.')
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
-			},
-			deleted: function(){
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent('Deleted')
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
 			},
 		};
 	}]);

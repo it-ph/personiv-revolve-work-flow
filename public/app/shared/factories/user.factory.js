@@ -43,5 +43,8 @@ sharedModule
 			resetPassword: function(id){
 				return $http.get(urlBase + '-reset-password/' + id);
 			},
+			paginate: function(page){
+				return $http.get(urlBase + '-paginate?page=' + page);
+			},
 		}
 	}]);

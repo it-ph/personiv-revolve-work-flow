@@ -56,3 +56,8 @@ Route::post('user-logout', 'UserController@logout');
 Route::post('user-check-email', 'UserController@checkEmail');
 Route::post('user-check-password', 'UserController@checkPassword');
 Route::post('user-change-password', 'UserController@changePassword');
+
+/* Paginate */
+Route::get('user-designers-paginate', 'UserController@designersPaginate');
+Route::get('category-paginate', 'CategoryController@paginate');
+Route::get('client-paginate', 'ClientController@paginate');

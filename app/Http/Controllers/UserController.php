@@ -92,6 +92,15 @@ class UserController extends Controller
         return Auth::user();
     }
 
+    /**
+     * Returns a paginated dlist of users with a role of designer.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function designersPaginate()
+    {
+        return User::withTrashed()->where('role', 'designer')->orderBy('name')->paginate(20);
+    }
 
     /**
      * Display a listing of the resource.
@@ -100,7 +109,7 @@ class UserController extends Controller
      */
     public function index()
     {
-        //
+        return User::all();
     }
 
     /**

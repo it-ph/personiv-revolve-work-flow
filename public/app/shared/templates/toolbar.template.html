@@ -1,13 +1,13 @@
 <div class="md-toolbar-tools" layout="row" flex flex-gt-md="85">
-	<md-button class="md-icon-button" ng-click="toggleSidenav('left')" hide-gt-sm>
+	<md-button class="md-icon-button" ng-click="toggleSidenav('left')" hide-gt-sm ng-if="!searchBar">
 		<md-icon class="mdi mdi-24px mdi-menu" aria-label="Toogle Sidenav"></md-icon>
 	</md-button>
   	<a ui-sref="main" layout="row" layout-align="center center" layout-padding class="site-logo" hide-md hide-sm hide-xs>
 		<img src="/img/Personiv-Final_white_transparent.png" alt="Personiv Logo">
 	</a>
 	<span flex="5" hide-md hide-sm hide-xs></span>
-	<span flex="5"></span>
-	<span class="md-headline white-text"> <span hide-md hide-sm hide-xs>{{ toolbar.parentState }}</span>
+	<span flex="5" ng-if="!searchBar"></span>
+	<span class="md-headline white-text" ng-if="!searchBar"> <span hide-md hide-sm hide-xs>{{ toolbar.parentState }}</span>
 		<md-icon class="mdi mdi-24px mdi-chevron-right grey" aria-label="chevron right" ng-if="toolbar.parentState && toolbar.childState" hide-md hide-sm hide-xs></md-icon>
 		<span ng-if="toolbar.childState">{{ toolbar.childState }}</span>
 	</span>
@@ -15,7 +15,7 @@
 		<!-- Search Bar -->
 		<div layout="row" ng-if="searchBar" flex flex-gt-sm="70" layout-align="center center">
 			<md-button class="md-icon-button" ng-click="hideSearchBar()">
-				<md-icon class="mdi mdi-24px mdi-arrow-left grey" aria-label="Hide Search Bar"></md-icon>
+				<md-icon class="mdi mdi-24px mdi-arrow-left" aria-label="Hide Search Bar"></md-icon>
 			</md-button>
 			<!-- Search Bar -->
 			<form layout="row" flex class="main-text">
@@ -32,7 +32,7 @@
 					</md-not-found>
 				</md-autocomplete>
 				<md-button type="submit" class="md-icon-button" ng-click="searchUserInput(toolbar.searchText)" ng-if="toolbar.searchAll">
-					<md-icon class="mdi mdi-24px mdi-magnify grey" aria-label="Search"></md-icon>
+					<md-icon class="mdi mdi-24px mdi-magnify" aria-label="Search"></md-icon>
 				</md-button>
 			</form>
 		</div>
