@@ -118,9 +118,10 @@ md-content.dirty-white{
 	background: $primary500;
 }
 
-.orange-bg{
-	background: $orange500;
+.accent-bg{
+	background: $accent;
 }
+
 
 .blur-white{
 	background: rgba(white,0.1);
@@ -148,6 +149,7 @@ md-content.dirty-white{
 
 .pattern{
 	@extend .hint;
+	bottom: -10px !important;
 	color: $red500 !important;
 }
 
@@ -203,7 +205,7 @@ md-content.dirty-white{
     position: absolute;
     left: 2px;
     right: auto;
-    bottom: -10px;
+    bottom: 4px;
     /* Copy styles from ng-messages */
     font-size: 12px;
     line-height: 14px;

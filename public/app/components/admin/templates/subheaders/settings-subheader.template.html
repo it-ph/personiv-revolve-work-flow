@@ -9,21 +9,29 @@
 		<md-icon class="mdi grey mdi-refresh"></md-icon>
 		<md-tooltip>Refresh</md-tooltip>
 	</md-button>
-	<!-- Filters -->
+	<!-- Filter / Sort By -->
 	<md-menu>
         <md-button aria-label="Open filters" class="md-icon-button" ng-click="$mdOpenMenu($event)">
-            <md-icon class="mdi mdi-filter grey"></md-icon>
-            <md-tooltip>Filters</md-tooltip>
+            <md-icon class="mdi mdi-sort-variant grey"></md-icon>
+            <md-tooltip>Sort By</md-tooltip>
         </md-button>
         <md-menu-content width="4">
-            <!-- <md-subheader>Filters</md-subheader> -->
-            <md-menu-item ng-repeat="filter in subheader.filters">
-              	<md-button flex ng-click="subheader.sortBy(filter)">
+            <md-subheader>Filter</md-subheader>
+            <!-- Active -->
+            <md-menu-item>
+                <md-button ng-click="subheader.toggleActive()">
+                    <span ng-if="!showInactive">Show inactive</span>
+                    <span ng-if="showInactive">Hide inactive</span>
+                </md-button>
+            </md-menu-item>
+            <md-subheader>Sort By</md-subheader>
+            <md-menu-item ng-repeat="item in subheader.sort">
+              	<md-button flex ng-click="subheader.sortBy(item)">
               		<div layout="row">
-	                	<span>{{filter.label}}</span>
+	                	<span>{{item.label}}</span>
 	                	<span flex></span>
-	                	<md-icon ng-show="!filter.sortReverse" class="mdi mdi-chevron-down grey"></md-icon>
-						<md-icon ng-show="filter.sortReverse" class="mdi mdi-chevron-up grey"></md-icon>
+	                	<md-icon ng-show="!item.sortReverse && sortType == item.type" class="mdi mdi-chevron-down grey"></md-icon>
+						<md-icon ng-show="item.sortReverse && sortType == item.type" class="mdi mdi-chevron-up grey"></md-icon>
               		</div>
               	</md-button>
             </md-menu-item>

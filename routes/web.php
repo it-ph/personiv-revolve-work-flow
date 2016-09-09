@@ -51,11 +51,12 @@ Route::resource('user', 'UserController');
 
 /* User Routes */
 Route::get('user-check', 'UserController@check');
-Route::get('user-reset-password/{userID}', 'UserController@resetPassword');
+Route::post('user-reset-password', 'UserController@resetPassword');
 Route::post('user-logout', 'UserController@logout');
 Route::post('user-check-email', 'UserController@checkEmail');
 Route::post('user-check-password', 'UserController@checkPassword');
 Route::post('user-change-password', 'UserController@changePassword');
+Route::post('user-disable', 'UserController@disable');
 
 /* Paginate */
 Route::get('user-designers-paginate', 'UserController@designersPaginate');

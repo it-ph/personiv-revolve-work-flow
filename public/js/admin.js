@@ -197,6 +197,11 @@ adminModule
 				'label': 'Tracker',
 			},
 			{
+				'state': 'main.notifications',
+				'icon': 'mdi-bell',
+				'label': 'Notifications',
+			},
+			{
 				'state': 'main.settings',
 				'icon': 'mdi-settings',
 				'label': 'Settings',
@@ -235,12 +240,13 @@ adminModule
 			})
 	}]);
 adminModule
-	.controller('settingsContentContainerController', ['$scope', '$filter', '$mdDialog', 'Preloader', 'Setting', function($scope, $filter, $mdDialog, Preloader, Setting){
+	.controller('settingsContentContainerController', ['$scope', '$filter', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Setting', 'User', function($scope, $filter, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Setting, User){
 		$scope.toolbar = {};
 
 		$scope.toolbar.childState = 'Settings';
 
 		$scope.toolbar.getItems = function(query){
+			$scope.showInactive = true;
 			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
 			return results;
 		}
@@ -262,6 +268,7 @@ adminModule
 			$scope.type.busy = false;
 			$scope.searchBar = false;
 			$scope.toolbar.searchText = '';
+			$scope.showInactive = false;
 		};
 		
 		$scope.searchUserInput = function(){
@@ -288,9 +295,33 @@ adminModule
 		$scope.fab = {};
 
 		$scope.fab.icon = 'mdi-plus';
-
+		
+		/* Sets up the page for what tab it is*/
 		var setInit = function(item){
+			var fabController = Setting.fabController(item);
+			var fabDialogTemplate = Setting.fabDialogTemplate(item);
+
 			$scope.fab.label = item;
+
+			/* Create */
+			$scope.fab.action = function(){
+				$mdDialog.show({
+			      	controller: fabController,
+			      	templateUrl: '/app/components/admin/templates/dialogs/' + fabDialogTemplate,
+			      	parent: angular.element(document.body),
+			      	fullscreen: true,
+			    })
+			    .then(function() {
+				    /* Refreshes the list*/
+				    Setting.fabCreateSuccessMessage(item)
+				    	.then(function(){
+						    $scope.init($scope.subheader.currentNavItem, true);
+				    	})
+			    }, function() {
+			    	return;
+			    });
+			}
+
 			$scope.init(item);
 			$scope.toolbar.items = [];
 			if(item != 'Designers'){
@@ -314,22 +345,91 @@ adminModule
 			else{
 				$scope.item_menu = [
 					{
+						'label': 'Update Info',
+						'icon': 'mdi-pencil',
+						action: function(user){
+							Preloader.set(user);
+							$mdDialog.show({
+						      	controller: 'editDesignersDialogController',
+						      	templateUrl: '/app/components/admin/templates/dialogs/edit-designers-dialog.template.html',
+						      	parent: angular.element(document.body),
+						      	fullscreen: true,
+						    })
+						    .then(function(user) {
+							    /* Refreshes the list*/
+							    $mdToast.show( 
+									$mdToast.simple()
+								        .textContent(user.name + '\'s account has been updated.')
+								        .position('bottom right')
+								        .hideDelay(3000)
+							    )
+						    	.then(function(){
+								    $scope.init($scope.subheader.currentNavItem, true);
+						    	})
+						    }, function() {
+						    	return;
+						    });
+						}, 
+					},
+					{
 						'label': 'Reset Password',
 						'icon': 'mdi-key-minus',
-						action: function(){
+						action: function(user){
+							var confirm = $mdDialog.confirm()
+					        	.title('Reset password')
+					          	.textContent('Reset ' + user.name + '\'s password?')
+					          	.ariaLabel('Reset password')
+					          	.ok('Reset')
+					          	.cancel('Cancel');
 
+					        $mdDialog.show(confirm).then(function() {
+						      	/* Resets the password to !welcome10 */
+						      	User.resetPassword([user])
+						      		.success(function(){
+						      			var message = user.name + '\'s password has been reset to "!welcome10".'
+						      			Preloader.notify(message);
+						      		})
+						      		.error(function(){
+						      			Preloader.error();
+						      		});
+						    }, function() {
+						      	return;
+						    });
 						}, 
 					},
 					{
 						'label': 'Disable Account',
 						'icon': 'mdi-account-remove',
-						action: function(){
+						action: function(user){
+							var confirm = $mdDialog.confirm()
+					        	.title('Disable account')
+					          	.textContent('Disable ' + user.name + '\'s account?')
+					          	.ariaLabel('Disable account')
+					          	.ok('Disable')
+					          	.cancel('Cancel');
 
+					        $mdDialog.show(confirm).then(function() {
+						      	/* Disables account of the user */
+						      	User.disable([user])
+						      		.success(function(){
+						      			$scope.type.busy = true;
+						      			$scope.type.show = false;
+						      			var message = user.name + '\'s account has been disabled.'
+						      			Preloader.notify(message)
+							      			.then(function(){	
+								      			$scope.init($scope.subheader.currentNavItem, true)
+							      			});
+						      		})
+						      		.error(function(){
+						      			Preloader.error();
+						      		});
+						    }, function() {
+						      	return;
+						    });
 						}, 
 					},
 				];
 			}
-
 		}
 
 		/**
@@ -361,24 +461,70 @@ adminModule
 			},
 		];
 
-		$scope.subheader.filters = [
+		$scope.subheader.sort = [
 			{
 				'label': 'Name',
 				'type': 'name',
 				'sortReverse': false,
 			},
 			{
-				'label': 'Date Created',
+				'label': 'Recently added',
 				'type': 'created_at',
 				'sortReverse': false,
 			},
 		];
+
+		$scope.subheader.toggleActive = function(){
+			$scope.showInactive = !$scope.showInactive;
+		}
 
 		$scope.subheader.sortBy = function(filter){
 			filter.sortReverse = !filter.sortReverse;			
 			$scope.sortType = filter.type;
 			$scope.sortReverse = filter.sortReverse;
 		}
+
+		$scope.showOptions = function(type){
+			if(type.deleted_at){
+				return;
+			}
+
+			type.item_menu = $scope.item_menu;
+			/* Set the item */
+			Preloader.set(type);
+
+			/* Only opens on mobile devices */
+			if($mdMedia('xs') || $mdMedia('sm')){
+				$scope.fab.show = false;
+
+				$mdBottomSheet.show({
+				    templateUrl: '/app/shared/templates/bottom-sheets/item-actions-bottom-sheet.template.html',
+				    controller: 'itemActionsBottomSheetController'
+				}).then(function(idx) {
+					/* Executes the action in item_menu*/
+				    $scope.item_menu[idx].action(type);
+				}, function(){
+					$scope.fab.show = true;
+				});
+			}
+			/* Opens in tablets and other devices with larger screens*/
+			else{
+				$mdDialog.show({
+			      	controller: 'itemActionsDialogController',
+			      	templateUrl: '/app/shared/templates/dialogs/item-actions-dialog.template.html',
+			      	parent: angular.element(document.body),
+			      	clickOutsideToClose:true,
+			      	// fullscreen: true,
+			    })
+			    .then(function(idx) {
+				    /* Executes the action in item_menu*/
+				    $scope.item_menu[idx].action(type);
+			    }, function() {
+			    	return;
+			    });
+			}
+		}
+
 		/**
 		 * Object for rightSidenav
 		 *
@@ -390,6 +536,7 @@ adminModule
 		var pushItem = function(item){
 			item.first_letter = item.name.charAt(0).toUpperCase();
 			item.created_at = new Date(item.created_at);
+			item.deleted_at = item.deleted_at ? new Date(item.deleted_at) : null;
 
 			var filter = {};
 			filter.display = item.name;
@@ -409,7 +556,12 @@ adminModule
 					$scope.type.details = data;
 					$scope.type.items = data.data;
 					$scope.type.show = true;
+
+					/* Fab */
 					$scope.fab.show = true;
+
+					// Hides inactive records
+					$scope.showInactive = false;
 
 					if(data.data.length){
 						// iterate over each record and set the updated_at date and first letter
@@ -456,8 +608,127 @@ adminModule
 		$scope.subheader.currentNavItem = $scope.subheader.navs[0].label;
 
 		$scope.fab.label = $scope.subheader.navs[0].label;
-
+		
+		/* Sets up the page for what tab it is*/
 		setInit($scope.subheader.currentNavItem);
 
+	}]);
+adminModule
+	.controller('itemActionsBottomSheetController', ['$scope', '$mdBottomSheet', 'Preloader', function($scope, $mdBottomSheet, Preloader){
+		$scope.type = Preloader.get();
+
+		$scope.action = function(idx){
+			$mdBottomSheet.hide(idx);
+		}
+	}]);
+adminModule
+	.controller('createDesignersDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
+		$scope.user = {};
+		$scope.user.role = 'Designer';
+
+		$scope.busy = false;
+		$scope.duplicate = false;
+		$scope.showHints = true;
+
+		$scope.checkDuplicate = function(){
+			User.checkEmail($scope.user)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			$scope.showHints = false;
+			if($scope.userForm.$invalid){
+				angular.forEach($scope.userForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if($scope.user.password != $scope.user.confirm)
+			{
+				return;
+			}
+			
+			$scope.busy = true;
+			User.store($scope.user)
+				.success(function(duplicate){
+					if(duplicate){
+						$scope.busy = false;
+						return;
+					}
+
+					Preloader.stop();
+				})
+				.error(function(){
+					Preloader.error();
+				});
+		}
+	}]);
+adminModule
+	.controller('editDesignersDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
+		$scope.user = Preloader.get();
+		$scope.label = Preloader.get().name;
+
+		$scope.busy = false;
+		$scope.duplicate = false;
+		$scope.showHints = true;
+
+		$scope.checkDuplicate = function(){
+			User.checkEmail($scope.user)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			$scope.showHints = false;
+			if($scope.userForm.$invalid){
+				angular.forEach($scope.userForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if($scope.user.password != $scope.user.confirm)
+			{
+				return;
+			}
+
+			$scope.busy = true;
+			User.update($scope.user.id, $scope.user)
+				.success(function(data){
+					if(typeof data == 'boolean'){
+						$scope.busy = false;
+						return;
+					}
+
+					Preloader.stop(data);
+				})
+				.error(function(){
+					Preloader.error();
+				});
+		}
+	}]);
+adminModule
+	.controller('itemActionsDialogController', ['$scope', '$mdDialog', 'Preloader', function($scope, $mdDialog, Preloader){
+		$scope.type = Preloader.get();
+
+		$scope.action = function(idx){
+			$mdDialog.hide(idx);
+		}
 	}]);
 //# sourceMappingURL=admin.js.map

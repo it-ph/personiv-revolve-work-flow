@@ -1,0 +1,15 @@
+<md-bottom-sheet class="md-list md-has-header">
+    <md-subheader>{{type.name}}</md-subheader>
+    <md-list ng-cloak>
+        <md-list-item flex ng-repeat="item in type.item_menu">
+            <md-button flex ng-click="action($index)" md-autofocus="$index == 2" class="md-list-item-content" >
+                <div layout="row" flex>
+	                <md-icon class="mdi {{item.icon}} grey"></md-icon>
+	                <span flex="5"></span>
+	                <span class="md-inline-list-icon-label">{{ item.label }}</span>
+	                <span flex></span>
+		        </div>
+            </md-button>
+        </md-list-item>
+    </md-list>
+</md-bottom-sheet>

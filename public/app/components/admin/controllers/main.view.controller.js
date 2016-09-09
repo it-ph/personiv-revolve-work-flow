@@ -18,6 +18,11 @@ adminModule
 				'label': 'Tracker',
 			},
 			{
+				'state': 'main.notifications',
+				'icon': 'mdi-bell',
+				'label': 'Notifications',
+			},
+			{
 				'state': 'main.settings',
 				'icon': 'mdi-settings',
 				'label': 'Settings',

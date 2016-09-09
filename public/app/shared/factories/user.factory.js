@@ -40,11 +40,14 @@ sharedModule
 				return $http.post(urlBase + '-change-password', data);
 			},
 			/* resets passwords of specific user */
-			resetPassword: function(id){
-				return $http.get(urlBase + '-reset-password/' + id);
+			resetPassword: function(data){
+				return $http.post(urlBase + '-reset-password', data);
 			},
 			paginate: function(page){
 				return $http.get(urlBase + '-paginate?page=' + page);
 			},
+			disable: function(data){
+				return $http.post(urlBase + '-disable', data);
+			}
 		}
 	}]);

@@ -1,33 +1,20 @@
-<div infinite-scroll='type.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="type.busy" infinite-scroll-parent ng-if="type.show" flex flex-gt-sm="90">
-	<md-list-item class="md-3-line" ng-repeat="type in type.items | filter: toolbar.searchText | orderBy:sortType:sortReverse">
-		<h2 class="md-avatar" ng-class="type.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
-			<span class="md-headline white-text">{{type.first_letter}}</span>
-		</h2>
-		<div class="md-list-item-text">
-			<h3>{{type.name}} 
-				<span class="secondary-text" ng-if="type.deleted_at">(Removed from the list 
-					<span am-time-ago="type.deleted_at"></span>)
-					<md-tooltip>{{type.deleted_at | date: 'MMM dd, yyyy'}}</md-tooltip>
-				</span>
-			</h3>
-			<h4>{{type.email}}</h4>
-			<p>{{type.created_at | date: 'MMM dd, yyyy'}}</p>
-		</div>
-		<md-menu ng-if="!type.deleted_at">
-	        <md-button aria-label="Open filters" class="md-icon-button" ng-click="$mdOpenMenu($event)">
-	            <md-icon class="mdi mdi-dots-vertical grey"></md-icon>
-	            <md-tooltip>Menu</md-tooltip>
-	        </md-button>
-	        <md-menu-content width="2">
-	            <md-menu-item ng-repeat="item in item_menu">
-	              	<md-button flex ng-click="item.action()">
-	              		<md-icon class="mdi {{item.icon}} grey"></md-icon>
-	                    {{item.label}}
-	              	</md-button>
-	            </md-menu-item>
-	        </md-menu-content>
-	    </md-menu>
-	</md-list-item>
+<div infinite-scroll='type.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="type.busy" infinite-scroll-parent ng-if="type.show">
+	<md-list>
+		<md-list-item class="md-3-line" ng-repeat="type in type.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-click="showOptions(type)" ng-if="showInactive || !type.deleted_at">
+			<h2 class="md-avatar" ng-class="type.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
+				<span class="md-headline white-text">{{type.first_letter}}</span>
+			</h2>
+			<div class="md-list-item-text">
+				<h3>{{type.name}}</h3>
+				<h4>{{type.email}}</h4>
+				<p ng-if="type.deleted_at">
+					<span class="secondary-text" >(deleted 
+						<span am-time-ago="type.deleted_at"></span>)
+					</span>
+				</p>
+			</div>
+		</md-list-item>
+	</md-list>
 </div>
 <div layout="row" layout-align="center center" layout-padding layout-margin ng-if="type.busy && !searchBar">
 	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>

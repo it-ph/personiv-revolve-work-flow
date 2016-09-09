@@ -19,9 +19,31 @@ class UserController extends Controller
      */
     public function checkEmail(Request $request)
     {
-        $user = User::where('email', $request->email)->first();
+        $user = $request->id ? User::withTrashed()->whereNotIn('id', [$request->id])->where('email', $request->email)->first() : User::withTrashed()->where('email', $request->email)->first();
 
         return response()->json($user ? true : false);
+    }
+
+    /**
+     * Disables the account of users.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function disable(Request $request)
+    {
+        if(Auth::user()->role != 'admin')
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+       for ($i=0; $i < count($request->all()); $i++) { 
+            $this->validate($request, [
+                $i.'.id' => 'required|numeric',
+            ]);
+
+            $user = User::where('id', $request->input($i.'.id'))->delete();
+        }
     }
 
     /**
@@ -29,14 +51,19 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function resetPassword($id)
+    public function resetPassword(Request $request)
     {
-        if(Auth::user()->role != 'super-admin')
+        if(Auth::user()->role != 'admin')
         {
             abort(403, 'Unauthorized action.');
         }
-        else{
-            $user = User::where('id', $id)->first();
+
+        for ($i=0; $i < count($request->all()); $i++) { 
+            $this->validate($request, [
+                $i.'.id' => 'required|numeric',
+            ]);
+
+            $user = User::where('id', $request->input($i.'.id'))->first();
 
             $user->password = Hash::make('!welcome10');
 
@@ -130,25 +157,29 @@ class UserController extends Controller
      */
     public function store(Request $request)
     {
-        $check_user = User::where('email', $request->email)->first();
+        $check_user = User::withTrashed()->where('email', $request->email)->first();
 
         if($check_user)
         {
             return response()->json(true);
         }
+
+        if($request->password != $request->confirm)
+        {
+            return response()->json(true);
+        }
         
         $this->validate($request, [
-            'first_name' => 'required|string',
-            'last_name' => 'required|string',
+            'name' => 'required|string',
             'role' => 'required|string',
             'email' => 'required|email|unique:users',
-            'password' => 'required|confirmed|min:8',
+            'password' => 'required|min:8',
+            'confirm' => 'required|min:8',
         ]);
 
         $user = new User;
 
-        $user->first_name = $request->first_name;
-        $user->last_name = $request->last_name;
+        $user->name = $request->name;
         $user->email = $request->email;
         $user->role = $request->role;
         $user->password = Hash::make($request->password);
@@ -187,7 +218,28 @@ class UserController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $check_user = User::withTrashed()->whereNotIn('id', [$id])->where('email', $request->email)->first();
+
+        if($check_user)
+        {
+            return response()->json(true);
+        }
+        
+        $this->validate($request, [
+            'name' => 'required|string',
+            'role' => 'required|string',
+            'email' => 'required|email',
+        ]);
+
+        $user = User::where('id', $id)->first();
+
+        $user->name = $request->name;
+        $user->email = $request->email;
+        $user->role = $request->role;
+
+        $user->save();
+
+        return $user;
     }
 
     /**

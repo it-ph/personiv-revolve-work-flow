@@ -21,7 +21,10 @@ a:focus {
   line-height: 1; }
 
 .md-mini .mdi {
-  font-size: 21px; }
+  font-size: 21px !important; }
+
+.mdi-large.mdi {
+  font-size: 36px !important; }
 
 .mdi.grey {
   color: #727272 !important; }
@@ -130,8 +133,8 @@ md-content.dirty-white {
 .primary-bg {
   background: #03A9F4; }
 
-.orange-bg {
-  background: #FF9800; }
+.accent-bg {
+  background: #FF4081; }
 
 .blur-white {
   background: rgba(255, 255, 255, 0.1); }
@@ -152,6 +155,7 @@ md-content.dirty-white {
   padding: 0px; }
 
 .pattern {
+  bottom: -10px !important;
   color: #F44336 !important; }
 
 .drop-menu {
@@ -195,7 +199,7 @@ md-content.dirty-white {
   position: absolute;
   left: 2px;
   right: auto;
-  bottom: -10px;
+  bottom: 4px;
   /* Copy styles from ng-messages */
   font-size: 12px;
   line-height: 14px;
