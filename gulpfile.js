@@ -13,7 +13,8 @@ require('laravel-elixir-vue');
  |
  */
 
-elixir(mix => {
+// elixir(mix => {
+elixir(function(mix) {
     mix
     	/* App Sass Bootstrap */
     	.sass('app.scss')
