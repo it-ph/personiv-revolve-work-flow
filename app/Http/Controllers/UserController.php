@@ -13,6 +13,39 @@ use App\User;
 class UserController extends Controller
 {
     /**
+     * Enlist the request of user.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function enlist(Request $request)
+    {
+        $users = User::query();
+
+         // true if the user wants to include deleted records 
+        if($request->withTrashed)
+        {
+            $users->withTrashed();
+        }
+
+        // iterates where clauses declared by user
+        if(count($request->input('where')))
+        {
+            for ($i=0; $i < count($request->input('where')); $i++) { 
+                $users->where($request->input('where')[$i]['label'], $request->input('where')[$i]['condition'], $request->input('where')[$i]['value']);
+            }
+        }
+
+        // matches any records with user request search text
+        if($request->searchText)
+        {
+            $users->where('name', 'like', '%'. $request->searchText .'%')->orWhere('email', 'like', '%'. $request->searchText .'%');
+        }
+
+        return $users->get();
+    }
+    
+    /**
      * Checks if the email is already taken.
      *
      * @return bool
@@ -22,28 +55,6 @@ class UserController extends Controller
         $user = $request->id ? User::withTrashed()->whereNotIn('id', [$request->id])->where('email', $request->email)->first() : User::withTrashed()->where('email', $request->email)->first();
 
         return response()->json($user ? true : false);
-    }
-
-    /**
-     * Disables the account of users.
-     *
-     * @param  int  $id
-     * @return \Illuminate\Http\Response
-     */
-    public function disable(Request $request)
-    {
-        if(Auth::user()->role != 'admin')
-        {
-            abort(403, 'Unauthorized action.');
-        }
-
-       for ($i=0; $i < count($request->all()); $i++) { 
-            $this->validate($request, [
-                $i.'.id' => 'required|numeric',
-            ]);
-
-            $user = User::where('id', $request->input($i.'.id'))->delete();
-        }
     }
 
     /**
@@ -69,7 +80,6 @@ class UserController extends Controller
 
             $user->save();
         }
-
     }
 
     /**
@@ -120,13 +130,23 @@ class UserController extends Controller
     }
 
     /**
-     * Returns a paginated dlist of users with a role of designer.
+     * Returns a paginated list of users with a role of designer.
      *
      * @return \Illuminate\Http\Response
      */
     public function designersPaginate()
     {
         return User::withTrashed()->where('role', 'designer')->orderBy('name')->paginate(20);
+    }
+
+    /**
+     * Returns a paginated dlist of users with a role of quality_control.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function qualityControlPaginate()
+    {
+        return User::withTrashed()->where('role', 'quality_control')->orderBy('name')->paginate(20);
     }
 
     /**
@@ -195,7 +215,7 @@ class UserController extends Controller
      */
     public function show($id)
     {
-        //
+        return User::withTrashed()->where('id', $id)->first();
     }
 
     /**
@@ -250,6 +270,11 @@ class UserController extends Controller
      */
     public function destroy($id)
     {
+        if(Auth::user()->role != 'admin')
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         User::where('id', $id)->delete();
     }
 }

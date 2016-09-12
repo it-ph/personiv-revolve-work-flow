@@ -1,11 +1,25 @@
 adminModule
-	.controller('editDesignersDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
-		$scope.user = Preloader.get();
-		$scope.label = Preloader.get().name;
+	.controller('editUsersDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
+		User.show(Preloader.get().id)
+			.success(function(data){
+				$scope.user = data;
+				$scope.label = data.name;
+			})
+			
 
 		$scope.busy = false;
 		$scope.duplicate = false;
 		$scope.showHints = true;
+		$scope.roles = [
+			{
+				'label': 'Designer',
+				'value': 'designer',
+			},
+			{
+				'label': 'Quality Control',
+				'value': 'quality_control',
+			},
+		];
 
 		$scope.checkDuplicate = function(){
 			User.checkEmail($scope.user)

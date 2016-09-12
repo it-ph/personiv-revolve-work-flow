@@ -95,6 +95,9 @@ sharedModule
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
 			},
+			checkDuplicate: function(data){
+				return $http.post(urlBase + '-check-duplicate', data);
+			},
 		}
 	}]);
 sharedModule
@@ -327,9 +330,8 @@ sharedModule
 		}
 	}]);
 sharedModule
-	.service('Preloader', ['$mdDialog', '$mdToast', function($mdDialog, $mdToast){
+	.service('Preloader', ['$mdDialog', '$mdToast', '$http', function($mdDialog, $mdToast, $http){
 		var dataHolder = null;
-		var user = null;
 
 		return {
 			/* Notifies a user with a message */
@@ -372,33 +374,51 @@ sharedModule
 			get: function(){
 				return dataHolder;
 			},
+			checkDuplicate: function(urlBase, data){
+				return $http.post(urlBase + '-check-duplicate', data);
+			},
 		};
 	}]);
 sharedModule
 	.service('Setting', ['$http', '$mdToast', function($http, $mdToast){
 		return {
 			paginate: function(type, page){
-				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : 'user-designers');
+				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user-designers' : 'user-quality_control'));
 
 				return $http.get(urlBase + '-paginate?page=' + page);
 			},
-			fabController: function(type){
-				return 'create' + type + 'DialogController';
-			},
-			fabDialogTemplate: function(type){
-				type = type.charAt(0).toLowerCase() + type.slice(1);
+			search: function(type, data){
+				var urlBase = type == 'Categories' ? 'category-enlist' : (type == 'Clients' ? 'client-enlist' : 'user-enlist');
 
-				return 'create-' + type + '-dialog.template.html';
+				return $http.post(urlBase, data);
+			},
+			settingController: function(action, type){
+				// removes white spaces
+				type = type.replace(/\s/g, '');
+				return action + type + 'DialogController';
+			},
+			settingDialogTemplate: function(action, type){
+				if(type == 'Designers' || type == 'Quality Control'){
+					return action + '-users-dialog.template.html';
+				}
+
+				// replaces white spaces with dashes and lower cases all captial letters
+				type = type.replace(/\s+/g, '-').toLowerCase();
+
+				return action + '-' + type + '-dialog.template.html';
 			},
 			fabCreateSuccessMessage: function(type){
 				if(type == 'Categories'){
-					var message = 'A new category has be added.'
+					var message = 'A new category has been added.'
 				}
 				else if(type == 'Clients'){
-					var message = 'A new client has be added.'
+					var message = 'A new client has been added.'
 				}
 				else if(type == 'Designers'){
-					var message = 'A new designer has be added to your team.'
+					var message = 'A new designer has been added to your team.'
+				}
+				else if(type == 'Quality Control'){
+					var message = 'A new quality control has been added to your team.'
 				}
 
 				return $mdToast.show(
@@ -408,6 +428,11 @@ sharedModule
 				        .hideDelay(3000)
 			    );
 			},
+			delete: function(type, item){
+				var urlBase = type == 'Categories' ? 'category' : 'client';
+
+				return $http.delete(urlBase + '/' + item.id);
+			}
 		}
 	}]);
 //# sourceMappingURL=shared.js.map

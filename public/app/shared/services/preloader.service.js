@@ -1,7 +1,6 @@
 sharedModule
-	.service('Preloader', ['$mdDialog', '$mdToast', function($mdDialog, $mdToast){
+	.service('Preloader', ['$mdDialog', '$mdToast', '$http', function($mdDialog, $mdToast, $http){
 		var dataHolder = null;
-		var user = null;
 
 		return {
 			/* Notifies a user with a message */
@@ -43,6 +42,9 @@ sharedModule
 			/* Retrieves data */
 			get: function(){
 				return dataHolder;
+			},
+			checkDuplicate: function(urlBase, data){
+				return $http.post(urlBase + '-check-duplicate', data);
 			},
 		};
 	}]);

@@ -1,8 +1,8 @@
 adminModule
-	.controller('createDesignersDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
+	.controller('createQualityControlDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', function($scope, $mdDialog, Preloader, User){
 		$scope.user = {};
-		$scope.user.role = 'designer';
-		$scope.label = 'Designer';
+		$scope.user.role = 'quality_control';
+		$scope.label = 'Quality Control';
 
 		$scope.busy = false;
 		$scope.duplicate = false;

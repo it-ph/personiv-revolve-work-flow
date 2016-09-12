@@ -1,5 +1,5 @@
 adminModule
-	.controller('settingsContentContainerController', ['$scope', '$filter', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Setting', 'User', function($scope, $filter, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Setting, User){
+	.controller('settingsContentContainerController', ['$scope', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Setting', 'User', function($scope, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Setting, User){
 		$scope.toolbar = {};
 
 		$scope.toolbar.childState = 'Settings';
@@ -27,24 +27,65 @@ adminModule
 			$scope.type.busy = false;
 			$scope.searchBar = false;
 			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
 			$scope.showInactive = false;
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.type.page = 1;
+				$scope.type.no_matches = false;
+				$scope.type.items = [];
+				$scope.searched = false;
+			}
 		};
 		
 		$scope.searchUserInput = function(){
-			// $scope.workStation.paginated.show = false;
-			Preloader.preload();
-			// WorkStation.search($scope.toolbar)
-			// 	.success(function(data){
-			// 		angular.forEach(data, function(item){
-			// 			pushItem(item);
-			// 		})
-			// 		$scope.workStation.results = data;
-			// 		Preloader.stop();
-			// 		$scope.workStation.searched = true;
-			// 	})
-			// 	.error(function(data){
-			// 		Preloader.error();
-			// 	});
+			$scope.type.busy = true;
+			$scope.isLoading = true;
+  			$scope.type.show = false;
+  			
+  			$scope.query = {};
+  			$scope.query.searchText = $scope.toolbar.searchText;
+  			$scope.query.withTrashed = true;
+
+  			if($scope.subheader.currentNavItem == 'Designers'){
+  				$scope.query.where = [
+  					{
+  						'label': 'role',
+  						'condition': '=',
+  						'value': 'designer',
+  					}
+  				];
+  			}
+  			else if($scope.subheader.currentNavItem == 'Quality Control'){
+  				$scope.query.where = [
+  					{
+  						'label': 'role',
+  						'condition': '=',
+  						'value': 'quality_control',
+  					}
+  				];	
+  			}
+
+  			Setting.search($scope.subheader.currentNavItem, $scope.query)
+  				.success(function(data){
+  					$scope.toolbar.items = [];
+  					if(data.length){
+	  					angular.forEach(data, function(item){
+	  						pushItem(item);
+	  					});
+	  					$scope.type.items = data;
+  					}
+  					else{
+  						$scope.type.items = [];	
+	  					$scope.type.no_matches = true;
+  					}
+  					$scope.searched = true;
+  					$scope.type.show = true;
+  					$scope.isLoading = false;
+  				})
+				.error(function(data){
+					Preloader.error();
+				});
 		};
 
 		/**
@@ -57,46 +98,100 @@ adminModule
 		
 		/* Sets up the page for what tab it is*/
 		var setInit = function(item){
-			var fabController = Setting.fabController(item);
-			var fabDialogTemplate = Setting.fabDialogTemplate(item);
+			var action = 'create';
+			var settingController = Setting.settingController(action, item);
+			var settingDialogTemplate = Setting.settingDialogTemplate(action, item);
 
 			$scope.fab.label = item;
 
 			/* Create */
 			$scope.fab.action = function(){
 				$mdDialog.show({
-			      	controller: fabController,
-			      	templateUrl: '/app/components/admin/templates/dialogs/' + fabDialogTemplate,
+			      	controller: settingController,
+			      	templateUrl: '/app/components/admin/templates/dialogs/' + settingDialogTemplate,
 			      	parent: angular.element(document.body),
 			      	fullscreen: true,
 			    })
 			    .then(function() {
+			    	$scope.type.busy = true;
+			    	$scope.isLoading = true;
+	      			$scope.type.show = false;
 				    /* Refreshes the list*/
 				    Setting.fabCreateSuccessMessage(item)
 				    	.then(function(){
-						    $scope.init($scope.subheader.currentNavItem, true);
+						    $scope.init($scope.subheader.currentNavItem);
 				    	})
 			    }, function() {
 			    	return;
 			    });
 			}
 
-			$scope.init(item);
 			$scope.toolbar.items = [];
-			if(item != 'Designers'){
+			
+			$scope.init(item);
+			
+			if(item == 'Categories' || item == 'Clients'){
 				$scope.item_menu = [
 					{
 						'label': 'Edit',
 						'icon': 'mdi-pencil',
-						action: function(){
+						action: function(item){
+							var action = 'edit';
+							var settingController = Setting.settingController(action, $scope.subheader.currentNavItem);
+							var settingDialogTemplate = Setting.settingDialogTemplate(action, $scope.subheader.currentNavItem);
 
+							Preloader.set(item);
+							$mdDialog.show({
+						      	controller: settingController,
+						      	templateUrl: '/app/components/admin/templates/dialogs/' + settingDialogTemplate,
+						      	parent: angular.element(document.body),
+						      	fullscreen: true,
+						    })
+						    .then(function() {
+						    	$scope.type.busy = true;
+				      			$scope.isLoading = true;
+				      			$scope.type.show = false;
+							    /* Refreshes the list*/
+							    var message = item.name + ' has been updated.';
+							    Preloader.notify(message)
+								    .then(function(){	
+						      			$scope.init($scope.subheader.currentNavItem)
+					      			});
+						    }, function() {
+						    	return;
+						    });
 						}, 
 					},
 					{
 						'label': 'Delete',
 						'icon': 'mdi-delete',
-						action: function(){
+						action: function(item){
+							var confirm = $mdDialog.confirm()
+					        	.title('Delete')
+					          	.textContent('Delete ' + item.name + '?')
+					          	.ariaLabel('Delete')
+					          	.ok('Delete')
+					          	.cancel('Cancel');
 
+					        $mdDialog.show(confirm).then(function() {
+				      			$scope.type.busy = true;
+				      			$scope.isLoading = true;
+				      			$scope.type.show = false;
+						      	/* Disables account of the user */
+						      	Setting.delete($scope.subheader.currentNavItem, item)
+						      		.success(function(){
+						      			var message = item.name + ' has been removed.'
+						      			Preloader.notify(message)
+							      			.then(function(){	
+								      			$scope.init($scope.subheader.currentNavItem)
+							      			});
+						      		})
+						      		.error(function(){
+						      			Preloader.error();
+						      		});
+						    }, function() {
+						      	return;
+						    });
 						}, 
 					},
 				];
@@ -109,22 +204,21 @@ adminModule
 						action: function(user){
 							Preloader.set(user);
 							$mdDialog.show({
-						      	controller: 'editDesignersDialogController',
-						      	templateUrl: '/app/components/admin/templates/dialogs/edit-designers-dialog.template.html',
+						      	controller: 'editUsersDialogController',
+						      	templateUrl: '/app/components/admin/templates/dialogs/edit-users-dialog.template.html',
 						      	parent: angular.element(document.body),
 						      	fullscreen: true,
 						    })
-						    .then(function(user) {
+						    .then(function() {
+						    	$scope.type.busy = true;
+				      			$scope.isLoading = true;
+				      			$scope.type.show = false;
 							    /* Refreshes the list*/
-							    $mdToast.show( 
-									$mdToast.simple()
-								        .textContent(user.name + '\'s account has been updated.')
-								        .position('bottom right')
-								        .hideDelay(3000)
-							    )
-						    	.then(function(){
-								    $scope.init($scope.subheader.currentNavItem, true);
-						    	})
+							    var message = user.name + '\'s account has been updated.'
+							    Preloader.notify(message)
+								    .then(function(){	
+						      			$scope.init($scope.subheader.currentNavItem)
+					      			});
 						    }, function() {
 						    	return;
 						    });
@@ -168,15 +262,16 @@ adminModule
 					          	.cancel('Cancel');
 
 					        $mdDialog.show(confirm).then(function() {
+				      			$scope.type.busy = true;
+				      			$scope.isLoading = true;
+				      			$scope.type.show = false;
 						      	/* Disables account of the user */
-						      	User.disable([user])
+						      	User.delete(user)
 						      		.success(function(){
-						      			$scope.type.busy = true;
-						      			$scope.type.show = false;
 						      			var message = user.name + '\'s account has been disabled.'
 						      			Preloader.notify(message)
 							      			.then(function(){	
-								      			$scope.init($scope.subheader.currentNavItem, true)
+								      			$scope.init($scope.subheader.currentNavItem)
 							      			});
 						      		})
 						      		.error(function(){
@@ -218,6 +313,12 @@ adminModule
 					setInit(this.label);
 				},
 			},
+			{
+				'label':'Quality Control',
+				action: function(){
+					setInit(this.label);
+				},
+			},
 		];
 
 		$scope.subheader.sort = [
@@ -232,6 +333,13 @@ adminModule
 				'sortReverse': false,
 			},
 		];
+
+		$scope.subheader.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.type.show = false;
+
+  			$scope.init($scope.subheader.currentNavItem);
+		}
 
 		$scope.subheader.toggleActive = function(){
 			$scope.showInactive = !$scope.showInactive;
@@ -303,9 +411,19 @@ adminModule
 			$scope.toolbar.items.push(filter);
 		}
 
-		$scope.init = function(request, refresh){
+		$scope.init = function(request){
 			$scope.type = {};
 			$scope.type.items = [];
+
+			if($scope.searched)
+			{
+				$scope.searchBar = false;
+				$scope.toolbar.searchText = '';
+				$scope.toolbar.searchItem = '';
+				$scope.type.page = 1;
+				$scope.type.no_matches = false;
+				$scope.searched = false;
+			}
 
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.type.page = 2;
@@ -330,13 +448,10 @@ adminModule
 
 					}
 
-					if(refresh){
-						Preloader.notify('Refreshed')
-					}
-
 					$scope.type.paginateLoad = function(){
 						// kills the function if ajax is busy or pagination reaches last page
 						if($scope.type.busy || ($scope.type.page > $scope.type.details.last_page)){
+							$scope.isLoading = false;
 							return;
 						}
 						/**
@@ -345,6 +460,7 @@ adminModule
 						*/
 						// sets to true to disable pagination call if still busy.
 						$scope.type.busy = true;
+						$scope.isLoading = true;
 						// Calls the next page of pagination.
 						Setting.paginate(request, $scope.type.page)
 							.success(function(data){
@@ -359,6 +475,7 @@ adminModule
 
 								// Enables again the pagination call for next call.
 								$scope.type.busy = false;
+								$scope.isLoading = false;
 							});
 					}
 				})

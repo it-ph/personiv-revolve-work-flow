@@ -15,15 +15,14 @@
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Name</label>
                     <input type="text" name="UserName" required ng-model="user.name">
-                    <div class="hint" ng-if="showHints">Tell us the new {{user.role}}'s name!</div>
+                    <div class="hint" ng-if="showHints">Tell us his/her full name.</div>
                     <div ng-messages="userForm.UserName.$error" ng-if="userForm.UserName.$touched && !showHints">
                         <div ng-message="required">Name is required.</div>
                     </div>
                 </md-input-container>
                 <!-- Role -->
                <md-radio-group layout-padding layout="row" layout-align="center center" required ng-model="user.role" flex-xs="100" flex-sm="100" flex-gt-sm>
-                    <md-radio-button value="designer" class="md-primary" flex>Designer</md-radio-button>
-                    <md-radio-button value="quality_control" class="md-primary" flex>QC</md-radio-button>
+                    <md-radio-button ng-repeat="role in roles" value="{{role.value}}" class="md-primary" flex>{{role.label}}</md-radio-button>
                 </md-radio-group>
             </div>
             <div layout="column" flex>

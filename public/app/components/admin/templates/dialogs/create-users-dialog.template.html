@@ -2,7 +2,7 @@
     <form name="userForm">
         <md-toolbar >
             <div class="md-toolbar-tools">
-                <h2 class="white-text">New user</h2>
+                <h2 class="white-text">New {{label}}</h2>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="cancel()">
                     <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
@@ -15,16 +15,12 @@
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Name</label>
                     <input type="text" name="UserName" required ng-model="user.name">
-                    <div class="hint" ng-if="showHints">Tell us the new {{user.role}}'s name!</div>
-                    <div ng-messages="userForm.UserName.$error" ng-if="userForm.UserName.$touched && !showHints">
+                    <div class="hint" ng-if="showHints">Tell us the new <span ng-if="user.role == 'designer'">designer</span><span ng-if="user.role == 'quality_control'">quality control</span>'s full name!</div>
+                    <div ng-messages="userForm.UserName.$error" ng-if="userForm.UserName.$touched">
                         <div ng-message="required">Name is required.</div>
                     </div>
                 </md-input-container>
                 <!-- Role -->
-               <md-radio-group layout-padding layout="row" layout-align="center center" required ng-model="user.role" flex-xs="100" flex-sm="100" flex-gt-sm>
-                    <md-radio-button value="Designer" class="md-primary" flex>Designer</md-radio-button>
-                    <md-radio-button value="QC" class="md-primary" flex>QC</md-radio-button>
-                </md-radio-group>
             </div>
             <div layout="column" flex>
                 <!-- Email -->

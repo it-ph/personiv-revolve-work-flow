@@ -56,9 +56,18 @@ Route::post('user-logout', 'UserController@logout');
 Route::post('user-check-email', 'UserController@checkEmail');
 Route::post('user-check-password', 'UserController@checkPassword');
 Route::post('user-change-password', 'UserController@changePassword');
-Route::post('user-disable', 'UserController@disable');
 
 /* Paginate */
 Route::get('user-designers-paginate', 'UserController@designersPaginate');
+Route::get('user-quality_control-paginate', 'UserController@qualityControlPaginate');
 Route::get('category-paginate', 'CategoryController@paginate');
 Route::get('client-paginate', 'ClientController@paginate');
+
+/* Enlist */
+Route::post('category-enlist', 'CategoryController@enlist');
+Route::post('client-enlist', 'ClientController@enlist');
+Route::post('user-enlist', 'UserController@enlist');
+
+/* Duplicate */
+Route::post('category-check-duplicate', 'CategoryController@checkDuplicate');
+Route::post('client-check-duplicate', 'ClientController@checkDuplicate');

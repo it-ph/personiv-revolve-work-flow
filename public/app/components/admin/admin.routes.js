@@ -44,4 +44,25 @@ adminModule
 					},
 				}
 			})
+			.state('main.tracker', {
+				url: 'tracker',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'trackerContentContainerController',
+					},
+					'toolbar@main.tracker': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.tracker': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'subheader@main.tracker': {
+						templateUrl: '/app/components/admin/templates/subheaders/tracker-subheader.template.html',
+					},
+					'content@main.tracker':{
+						templateUrl: '/app/components/admin/templates/content/tracker-content.template.html',
+					},
+				}
+			})
 	}]);
