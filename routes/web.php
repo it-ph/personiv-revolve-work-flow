@@ -62,6 +62,7 @@ Route::get('user-designers-paginate', 'UserController@designersPaginate');
 Route::get('user-quality_control-paginate', 'UserController@qualityControlPaginate');
 Route::get('category-paginate', 'CategoryController@paginate');
 Route::get('client-paginate', 'ClientController@paginate');
+Route::post('task-paginate', 'TaskController@paginate');
 
 /* Enlist */
 Route::post('category-enlist', 'CategoryController@enlist');
@@ -71,3 +72,4 @@ Route::post('user-enlist', 'UserController@enlist');
 /* Duplicate */
 Route::post('category-check-duplicate', 'CategoryController@checkDuplicate');
 Route::post('client-check-duplicate', 'ClientController@checkDuplicate');
+Route::post('task-check-duplicate', 'TaskController@checkDuplicate');

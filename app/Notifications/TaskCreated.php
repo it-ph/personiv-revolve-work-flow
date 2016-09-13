@@ -1,24 +1,28 @@
 <?php
 
 namespace App\Notifications;
-
+use App\Task;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class TasksCreated extends Notification
+class TaskCreated extends Notification
 {
     use Queueable;
 
+    protected $task;
+ 
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct()
+    public function __construct(Task $task)
     {
         //
+
+        $this->task = $task;
     }
 
     /**
@@ -55,7 +59,7 @@ class TasksCreated extends Notification
     public function toArray($notifiable)
     {
         return [
-            //
+            'task_id' => $this->task->id,
         ];
     }
 }

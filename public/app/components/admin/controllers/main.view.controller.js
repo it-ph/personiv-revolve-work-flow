@@ -13,7 +13,7 @@ adminModule
 				'label': 'Dashboard',
 			},
 			{
-				'state': 'main.tasks',
+				'state': 'main.tracker',
 				'icon': 'mdi-view-list',
 				'label': 'Tracker',
 			},
@@ -58,5 +58,29 @@ adminModule
 		User.check()
 			.success(function(data){
 				$scope.user = data;
+
+				var pusher = new Pusher('58891c6a307bb58de62e', {
+			    	encrypted: true
+			    });
+
+			    var channel = pusher.subscribe('admin');
+
+			    channel.bind('App\\Event\\PusherTaskCreated', function(data) {
+				    	console.log(data);
+				    	// Preloader.setNotification(data.data);
+				    	// // pops out the toast
+				    	// $mdToast.show({
+					    // 	controller: 'notificationToastController',
+					    //   	templateUrl: '/app/components/admin/templates/toasts/notification.toast.html',
+					    //   	parent : angular.element($('body')),
+					    //   	hideDelay: 6000,
+					    //   	position: 'bottom right'
+					    // });
+				    	// // updates the notification menu
+				    	// Notification.unseen()
+				    	// 	.success(function(data){
+				    	// 		$scope.notifications = data;
+				    	// 	});
+				    });
 			})
 	}]);

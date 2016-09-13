@@ -18,5 +18,13 @@ sharedModule
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
 			},
+			paginate: function(data, page){
+				if(!page)
+				{
+					return $http.post(urlBase + '-paginate', data);
+				}
+				
+				return $http.post(urlBase + '-paginate?page=' + page, data);
+			},
 		}
 	}]);

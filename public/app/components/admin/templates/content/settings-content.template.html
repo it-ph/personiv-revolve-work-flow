@@ -14,9 +14,9 @@
 			</div>
 			<md-button class="md-secondary md-icon-button" ng-click="type.details = !type.details">
 				<md-icon class="mdi mdi-details grey"></md-icon>
-				<md-tooltip>
-					<span ng-if="type.details">Show</span>
-					<span ng-if="!type.details">Hide</span>
+				<md-tooltip hide-xs hide-sm hide-md>
+					<span ng-if="type.details">Hide</span>
+					<span ng-if="!type.details">Show</span>
 					details
 				</md-tooltip>
 			</md-button>

@@ -1,0 +1,48 @@
+<div infinite-scroll='task.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="task.busy" infinite-scroll-parent ng-if="task.show">
+	<md-list>
+		<md-list-item ng-if="!selectMultiple" class="md-3-line md-long-text secondary-button-padding" ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ui-sref="main.task({taskID:task.id})" ng-if="showInactive || !task.deleted_at">
+			<h2 class="md-avatar" ng-class="task.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
+				<span class="md-headline white-text">{{task.first_letter}}</span>
+			</h2>
+			<div class="md-list-item-text">
+				<h3>{{task.file_name}}</h3>
+				<h4>{{task.client}} - {{task.category}}</h4>
+				<p ng-if="task.details">
+					<span class="md-caption">Delivery date: {{task.delivery_date | date:'MMM dd, yyyy'}}</span> |
+					<span class="md-caption">Live date: {{task.live_date | date:'MMM dd, yyyy'}}</span> |
+					<span class="md-caption">Last updated: {{task.updated_at | date:'MMM dd, yyyy, hh:mma'}}</span> |
+					<span class="md-caption" ng-if="task.deleted_at">Date deleted: {{task.deleted_at | date:'MMM dd, yyyy, hh:mma'}}</span>
+				</p>
+			</div>
+			<md-button class="md-secondary md-icon-button" ng-click="task.details = !task.details">
+				<md-icon class="mdi mdi-details grey"></md-icon>
+				<md-tooltip hide-xs hide-sm hide-md>
+					<span ng-if="task.details">Hide</span>
+					<span ng-if="!task.details">Show</span>
+					details
+				</md-tooltip>
+			</md-button>
+		</md-list-item>
+		<!-- Select Multiple -->
+		<md-list-item ng-if="selectMultiple" class="md-2-line md-long-text" ng-repeat="task in task.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="!task.deleted_at">
+			<h2 class="md-avatar" ng-class="task.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
+				<span class="md-headline white-text">{{task.first_letter}}</span>
+			</h2>
+			<div class="md-list-item-text">
+				<h3>{{task.file_name}}</h3>
+				<h4>{{task.client}} - {{task.category}}</h4>
+			</div>
+			<md-checkbox class="md-secondary" ng-model="task.include"></md-checkbox>
+		</md-list-item>
+	</md-list>
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!task.items.length && task.show && !task.no_matches">
+	Nothing to display.
+</div>
+<div layout-padding layout-margin ng-if="task.no_matches && task.show">
+	<p>No results matching <strong class="accent-text">"{{query.searchText}}"</strong> were found.</p>
+</div>
+

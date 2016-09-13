@@ -1,5 +1,5 @@
 <?php
-
+use Carbon\Carbon;
 /*
 |--------------------------------------------------------------------------
 | Model Factories
@@ -20,4 +20,48 @@ $factory->define(App\User::class, function (Faker\Generator $faker) {
         'password' => $password ?: $password = bcrypt('secret'),
         'remember_token' => str_random(10),
     ];
+});
+
+$factory->define(App\Task::class, function (Faker\Generator $faker) {
+    static $password;
+
+    return [
+        'delivery_date' => Carbon::parse('today')->toDateTimeString(),
+        'live_date' => Carbon::parse('today')->addDay()->toDateTimeString(),
+        'file_name' => str_random(10) .'.jpg',
+        'client_id' => 2,
+        'category_id' => 2,
+    ];
+});
+
+// Pending Task
+$factory->defineAs(App\Task::class, 'pending', function ($faker) use ($factory) {
+    $task = $factory->raw(App\Task::class);
+
+    return array_merge($task, ['status' => 'pending']);
+});
+
+// In progress Task
+$factory->defineAs(App\Task::class, 'in_progress', function ($faker) use ($factory) {
+    $task = $factory->raw(App\Task::class);
+
+    return array_merge($task, ['status' => 'in_progress']);
+});
+
+$factory->defineAs(App\Task::class, 'for_qc', function ($faker) use ($factory) {
+    $task = $factory->raw(App\Task::class);
+
+    return array_merge($task, ['status' => 'for_qc']);
+});
+
+$factory->defineAs(App\Task::class, 'rework', function ($faker) use ($factory) {
+    $task = $factory->raw(App\Task::class);
+
+    return array_merge($task, ['status' => 'rework']);
+});
+
+$factory->defineAs(App\Task::class, 'complete', function ($faker) use ($factory) {
+    $task = $factory->raw(App\Task::class);
+
+    return array_merge($task, ['status' => 'complete']);
 });

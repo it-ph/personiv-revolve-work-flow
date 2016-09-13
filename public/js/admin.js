@@ -213,7 +213,7 @@ adminModule
 				'label': 'Dashboard',
 			},
 			{
-				'state': 'main.tasks',
+				'state': 'main.tracker',
 				'icon': 'mdi-view-list',
 				'label': 'Tracker',
 			},
@@ -258,6 +258,30 @@ adminModule
 		User.check()
 			.success(function(data){
 				$scope.user = data;
+
+				var pusher = new Pusher('58891c6a307bb58de62e', {
+			    	encrypted: true
+			    });
+
+			    var channel = pusher.subscribe('admin');
+
+			    channel.bind('App\\Event\\PusherTaskCreated', function(data) {
+				    	console.log(data);
+				    	// Preloader.setNotification(data.data);
+				    	// // pops out the toast
+				    	// $mdToast.show({
+					    // 	controller: 'notificationToastController',
+					    //   	templateUrl: '/app/components/admin/templates/toasts/notification.toast.html',
+					    //   	parent : angular.element($('body')),
+					    //   	hideDelay: 6000,
+					    //   	position: 'bottom right'
+					    // });
+				    	// // updates the notification menu
+				    	// Notification.unseen()
+				    	// 	.success(function(data){
+				    	// 		$scope.notifications = data;
+				    	// 	});
+				    });
 			})
 	}]);
 adminModule
@@ -951,6 +975,67 @@ adminModule
 				.error(function(){
 					Preloader.error();
 				});
+		}
+	}]);
+adminModule
+	.controller('createTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', 'Client', 'Task', function($scope, $mdDialog, Preloader, Category, Client, Task){
+		var urlBase = 'task';
+		$scope.task = {};
+		$scope.task.delivery_date = new Date();
+		$scope.task.live_date = new Date();
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		Category.index()
+			.success(function(data){
+				$scope.categories = data;
+			})
+
+		Client.index()
+			.success(function(data){
+				$scope.clients = data;
+			})
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.task)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.taskForm.$invalid){
+				angular.forEach($scope.taskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				
+				$scope.task.delivery_date = $scope.task.delivery_date.toDateString();
+				$scope.task.live_date = $scope.task.live_date.toDateString();
+
+				Task.store($scope.task)
+					.success(function(duplicate){
+						if(duplicate){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
 		}
 	}]);
 adminModule
