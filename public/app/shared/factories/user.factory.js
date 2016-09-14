@@ -20,8 +20,8 @@ sharedModule
 			},
 
 			/* checks authenticated user */
-			check: function(){
-				return $http.get(urlBase + '-check');
+			check: function(query){
+				return $http.post(urlBase + '-check', query);
 			},
 			/* logout authenticated user */
 			logout: function(){
@@ -48,6 +48,9 @@ sharedModule
 			},
 			disable: function(data){
 				return $http.post(urlBase + '-disable', data);
-			}
+			},
+			markAsRead: function(id){
+				return $http.get(urlBase + '-mark-as-read/' + id);
+			},
 		}
 	}]);

@@ -42,6 +42,7 @@ Route::resource('category', 'CategoryController');
 Route::resource('client', 'ClientController');
 Route::resource('comment', 'CommentController');
 Route::resource('designer-assigned', 'DesignerAssignedController');
+Route::resource('notification', 'NotificationController');
 Route::resource('quality-control-assigned', 'QualityControlAssignedController');
 Route::resource('quality-control-task', 'QualityControlTaskController');
 Route::resource('rework', 'ReworkController');
@@ -50,7 +51,7 @@ Route::resource('task', 'TaskController');
 Route::resource('user', 'UserController');
 
 /* User Routes */
-Route::get('user-check', 'UserController@check');
+Route::post('user-check', 'UserController@check');
 Route::post('user-reset-password', 'UserController@resetPassword');
 Route::post('user-logout', 'UserController@logout');
 Route::post('user-check-email', 'UserController@checkEmail');
@@ -73,3 +74,7 @@ Route::post('user-enlist', 'UserController@enlist');
 Route::post('category-check-duplicate', 'CategoryController@checkDuplicate');
 Route::post('client-check-duplicate', 'ClientController@checkDuplicate');
 Route::post('task-check-duplicate', 'TaskController@checkDuplicate');
+
+/* Notification */
+Route::get('notification-mark-as-read/{notificationID}', 'NotificationController@markAsRead');
+Route::get('notification-mark-all-as-read', 'NotificationController@markAllAsRead');

@@ -199,7 +199,7 @@ adminModule
 		}();
 	}]);
 adminModule
-	.controller('mainViewController', ['$scope', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', function($scope, $mdDialog, $mdSidenav, $mdToast, User, Preloader){
+	.controller('mainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){
 		$scope.toggleSidenav = function(menuID){
 			$mdSidenav(menuID).toggle();
 		}
@@ -255,33 +255,75 @@ adminModule
 		    });
 		}
 
+		var fetchUnreadNotifications = function(){
+			User.check()
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
+		var formatNotification = function(data){
+			angular.forEach(data.unread_notifications, function(notif){
+				notif.first_letter = notif.data.sender.name.charAt(0).toUpperCase();
+				notif.sender = notif.data.sender.name;
+				notif.created_at = new Date(notif.created_at);
+
+				if(notif.type == 'App\\Notifications\\TaskCreated'){
+					notif.message = 'created a new task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$user = data;
+								$state.go('main.task', {'taskID': id});
+							})
+					}
+				}
+			});
+
+			return data;
+		}
+
+		$scope.markAsRead = function(id){
+			Notification.markAsRead(id)
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
+		$scope.markAllAsRead = function(){
+			Notification.markAllAsRead()
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
 		User.check()
 			.success(function(data){
+				formatNotification(data);
+
 				$scope.user = data;
 
 				var pusher = new Pusher('58891c6a307bb58de62e', {
-			    	encrypted: true
+			      encrypted: true
 			    });
 
-			    var channel = pusher.subscribe('admin');
+				var channel = {};
 
-			    channel.bind('App\\Event\\PusherTaskCreated', function(data) {
-				    	console.log(data);
-				    	// Preloader.setNotification(data.data);
-				    	// // pops out the toast
-				    	// $mdToast.show({
-					    // 	controller: 'notificationToastController',
-					    //   	templateUrl: '/app/components/admin/templates/toasts/notification.toast.html',
-					    //   	parent : angular.element($('body')),
-					    //   	hideDelay: 6000,
-					    //   	position: 'bottom right'
-					    // });
-				    	// // updates the notification menu
-				    	// Notification.unseen()
-				    	// 	.success(function(data){
-				    	// 		$scope.notifications = data;
-				    	// 	});
-				    });
+				channel.admin = pusher.subscribe('admin');
+				channel.user = pusher.subscribe('user.' + $scope.user.id);					
+				
+			    channel.user.bindings = [
+				    channel.user.bind('App\\Events\\PusherTaskCreated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' created a new task.';
+				    	Preloader.newNotification(message);
+				    }),
+			    ];
 			})
 	}]);
 adminModule

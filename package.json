@@ -16,6 +16,8 @@
     "vue-resource": "^0.9.3"
   },
   "dependencies": {
-    "angular-chart.js": "^1.0.2"
+    "angular-chart.js": "^1.0.2",
+    "laravel-echo": "^1.0.4",
+    "pusher-js": "^3.2.1"
   }
 }

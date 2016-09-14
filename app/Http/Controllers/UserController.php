@@ -124,9 +124,13 @@ class UserController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function check()
-    {
-        return Auth::user();
+    public function check(Request $request)
+    {   
+        $user = Auth::user();
+
+        $user->unread_notifications = $user->unreadNotifications;
+
+        return $user;
     }
 
     /**

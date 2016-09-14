@@ -18,5 +18,11 @@ sharedModule
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
 			},
+			markAsRead: function(id){
+				return $http.get(urlBase + '-mark-as-read/' + id);
+			},
+			markAllAsRead: function(){
+				return $http.get(urlBase + '-mark-all-as-read');
+			},
 		}
 	}]);

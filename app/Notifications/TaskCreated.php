@@ -12,17 +12,17 @@ class TaskCreated extends Notification
     use Queueable;
 
     protected $task;
+    protected $sender;
  
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct(Task $task)
+    public function __construct(Task $task, $sender)
     {
-        //
-
         $this->task = $task;
+        $this->sender = $sender;
     }
 
     /**
@@ -59,7 +59,8 @@ class TaskCreated extends Notification
     public function toArray($notifiable)
     {
         return [
-            'task_id' => $this->task->id,
+            'attachement' => $this->task,
+            'sender' => $this->sender,
         ];
     }
 }

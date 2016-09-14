@@ -295,7 +295,7 @@ sharedModule
 			$scope.selectMultiple = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
-			$scope.fab.action = createTask();
+			$scope.fab.action = createTask;
 
 			angular.forEach($scope.task.items, function(item){
 				item.include = false;

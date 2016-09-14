@@ -11,6 +11,7 @@ use Carbon\Carbon;
 use Auth;
 use App\Notifications\TaskCreated;
 use App\Events\PusherTaskCreated;
+use App\Events\Test;
 
 class TaskController extends Controller
 {
@@ -79,7 +80,11 @@ class TaskController extends Controller
      */
     public function index()
     {
-        //
+        $user = Auth::user();
+        $task = Task::find(1);
+
+        $user->notify(new TaskCreated($task, $user));
+        event(new PusherTaskCreated($task, $user, $user));
     }
 
     /**
@@ -126,11 +131,14 @@ class TaskController extends Controller
 
         $task->save();
 
+        // fetch the users to be notified
         $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
         foreach ($users as $key => $user) {
-            $user->notify(new TaskCreated($task));
-            event(new PusherTaskCreated($task));
+            // save the notifications to database - task, sender
+            $user->notify(new TaskCreated($task, Auth::user()));
+            // broadcast the notifications - task, sender, recipient
+            event(new PusherTaskCreated($task, Auth::user(), $user));
         }
     }
 

@@ -372,7 +372,7 @@ sharedModule
 			$scope.selectMultiple = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
-			$scope.fab.action = createTask();
+			$scope.fab.action = createTask;
 
 			angular.forEach($scope.task.items, function(item){
 				item.include = false;
@@ -641,6 +641,12 @@ sharedModule
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
 			},
+			markAsRead: function(id){
+				return $http.get(urlBase + '-mark-as-read/' + id);
+			},
+			markAllAsRead: function(){
+				return $http.get(urlBase + '-mark-all-as-read');
+			},
 		}
 	}]);
 sharedModule
@@ -761,8 +767,8 @@ sharedModule
 			},
 
 			/* checks authenticated user */
-			check: function(){
-				return $http.get(urlBase + '-check');
+			check: function(query){
+				return $http.post(urlBase + '-check', query);
 			},
 			/* logout authenticated user */
 			logout: function(){
@@ -789,7 +795,10 @@ sharedModule
 			},
 			disable: function(data){
 				return $http.post(urlBase + '-disable', data);
-			}
+			},
+			markAsRead: function(id){
+				return $http.get(urlBase + '-mark-as-read/' + id);
+			},
 		}
 	}]);
 sharedModule
@@ -797,6 +806,28 @@ sharedModule
 		var dataHolder = null;
 
 		return {
+			customNotification: function(data){
+				dataHolder = data;
+				$mdToast.show({
+		          	hideDelay   : 3000,
+		          	position    : 'bottom right',
+		          	controller  : 'customNotificationToastController',
+		          	templateUrl : '/app/shared/templates/toasts/custom-notification-toast.template.html'
+		        });
+			},
+			newNotification: function(message, action) {
+				var toast = $mdToast.simple()
+			      	.textContent(message)
+			      	.action(action)
+			      	.highlightAction(true)
+			      	.highlightClass('md-primary')// Accent is used by default, this just demonstrates the usage.
+			      	.position('bottom right');
+
+			    var audio = new Audio('/audio/notif.mp3')
+			    audio.play();
+			    
+			    return $mdToast.show(toast);
+			},
 			/* Notifies a user with a message */
 			notify: function(message){
 				return $mdToast.show(
@@ -897,5 +928,15 @@ sharedModule
 				return $http.delete(urlBase + '/' + item.id);
 			}
 		}
+	}]);
+sharedModule
+	.controller('customNotificationToastController', ['$scope', '$mdToast', '$state', 'Preloader', 'Notification', function($scope, $mdToast, $state, Preloader, Notification){
+		$scope.notification = Preloader.get();
+
+		console.log($scope.notification);
+
+		$scope.notification.first_letter = $scope.notification.sender.name.charAt(0).toUpperCase();
+		$scope.notification.sender = $scope.notification.sender.name;
+		$scope.notification.created_at = new Date($scope.notification.data.created_at);
 	}]);
 //# sourceMappingURL=shared.js.map
