@@ -65,4 +65,25 @@ adminModule
 					},
 				}
 			})
+			.state('main.upload', {
+				url: 'upload',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'uploadContentContainerController',
+					},
+					'toolbar@main.upload': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.upload': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					// 'subheader@main.upload': {
+					// 	templateUrl: '/app/components/admin/templates/subheaders/upload-subheader.template.html',
+					// },
+					'content@main.upload':{
+						templateUrl: '/app/components/admin/templates/content/upload-content.template.html',
+					},
+				}
+			})
 	}]);

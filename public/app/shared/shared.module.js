@@ -4,5 +4,6 @@ var sharedModule = angular.module('sharedModule', [
 	'ngMessages',
 	'infinite-scroll',
 	'chart.js',
-	'angularMoment'
+	'angularMoment',
+	'angularFileUpload'
 ]);

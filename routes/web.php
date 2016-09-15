@@ -78,3 +78,10 @@ Route::post('task-check-duplicate', 'TaskController@checkDuplicate');
 /* Notification */
 Route::get('notification-mark-as-read/{notificationID}', 'NotificationController@markAsRead');
 Route::get('notification-mark-all-as-read', 'NotificationController@markAllAsRead');
+
+/* Spreadsheet */
+Route::get('spreadsheet-read/{spreadsheetID}', 'SpreadsheetController@read');
+
+/* Task */
+Route::post('task-store-multiple', 'TaskController@storeMultiple');
+Route::post('task-check-duplicate-multiple', 'TaskController@checkDuplicateMultiple');

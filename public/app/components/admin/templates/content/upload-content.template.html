@@ -1,0 +1,106 @@
+<div layout="column" flex layout-align="center center" class="drop-zone" nv-file-drop uploader="excelUploader" ng-if="!excelUploader.queue.length">
+	<div layout="column" layout-align="center center" layout-padding>
+		<img src="/img/excel.png" alt="Drop Zone">
+		<h2 class="md-subhead">Drop spreadsheet here.</h2>
+		<h2 class="md-subhead" ng-if="fileError">Spreadsheet must be .xls or .xlsx</h2>
+	</div>
+	<div class="container">
+		<h2 class="md-headline">Before dropping a file:</h2>
+		<ul>
+			<li>File must be .xls or .xlsx</li>
+			<li>Include the headers in the excel file.</li>
+			<li>Check for duplicate file names.</li>
+			<li>Do not leave any empty columns or rows in between.</li>
+		</ul>
+		<h2 class="md-headline">Sample Format:</h2>
+		<table class="table">
+			<tr>
+				<th>Delivery Date</th>
+				<th>Live Date</th>
+				<th>File Name</th>
+				<th>Client</th>
+				<th>Category</th>
+			</tr>
+			<tr>
+				<td>9/1/16</td>
+				<td>9/17/16</td>
+				<td>SomeFileName.jpg</td>
+				<td>Some Client Name</td>
+				<td>Some Category</td>
+			</tr>
+		</table>
+	</div>
+</div>
+
+<div layout="column" flex layout-align="center center" class="drop-zone" ng-if="excelUploader.queue.length && !show">
+	<div layout="column">
+		<md-progress-circular md-diameter="96"></md-progress-circular>
+	</div>
+</div>
+
+ <div ng-if="show" layout-margin flex flex-gt-lg="80">
+ 	<form name="form.taskForm">
+ 		<md-card ng-repeat="task in tasks | filter:toolbar.searchText">
+ 			<md-toolbar ng-class="task.duplicate ? 'md-accent' : 'white-toolbar'">
+	            <div class="md-toolbar-tools">
+	                <h2 ng-class="task.duplicate ? 'white-text' : ''">{{task.file_name}}</h2>
+	                <span flex></span>
+	                <md-button class="md-icon-button" ng-click="remove(task)">
+	                    <md-icon class="mdi mdi-close mdi-24px" ng-class="task.duplicate ? '' : 'grey'" aria-label="Close dialog"></md-icon>
+	                </md-button>
+	            </div>
+	        </md-toolbar>
+ 			<md-card-content layout-padding>
+		        <div layout="row" layout-wrap flex>
+		            <!-- Delivery Date -->
+		            <div layout-padding flex-xs="100" flex-sm="100" flex-gt-sm>
+		                <h4>Delivery date</h4>
+		                <md-datepicker name="DeliveryDate{{$index}}" ng-model="task.delivery_date" md-placeholder="Delivery date" md-max-date="task.live_date" required></md-datepicker>
+		                <div class="validation-messages" ng-messages="form.taskForm['DeliveryDate' + $index].$error" ng-if="form.taskForm['DeliveryDate' + $index].$touched">
+		                    <div ng-message="valid">The entered value is not a date!</div>
+		                    <div ng-message="required">Delivery date is required.</div>
+		                    <div ng-message="mindate">Delivery date cannot be later than delivery date.</div>
+		                </div>
+		            </div>
+		             <!-- Live Date -->
+		            <div layout-padding flex-xs="100" flex-sm="100" flex-gt-sm>
+		                <h4>Live date</h4>
+		                <md-datepicker name="LiveDate{{$index}}" ng-model="task.live_date" md-placeholder="Live date" md-min-date="task.delivery_date" required></md-datepicker>
+		                <div class="validation-messages" ng-messages="form.taskForm['DeliveryDate' + $index].$error" ng-if="form.taskForm['DeliveryDate' + $index].$touched">
+		                    <div ng-message="valid">The entered value is not a date!</div>
+		                    <div ng-message="required">Live date is required.</div>
+		                    <div ng-message="mindate">Live date cannot be earlier than delivery date.</div>
+		                </div>
+		            </div>
+		        </div>
+		        <div layout="row" layout-wrap flex>
+		            <!-- File Name -->
+		            <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+		                <label>File name</label>
+		                <input type="text" name="FileName{{$index}}" required ng-model="task.file_name" ng-blur="checkDuplicate(task)">
+		                <div class="pattern" ng-if="task.duplicate">File name already exists.</div>
+		                <div ng-messages="form.taskForm['FileName' + $index].$error" ng-if="form.taskForm['FileName' + $index].$touched">
+		                    <div ng-message="required">File name is required.</div>
+		                </div>
+		            </md-input-container>
+		            <!-- Client -->
+		            <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+		                <label>Client</label>
+		                <input type="text" name="Client{{$index}}" required ng-model="task.client">
+		                <div ng-messages="form.taskForm['Client' + $index].$error" ng-if="form.taskForm['Client' + $index].$touched">
+		                    <div ng-message="required">Client is required.</div>
+		                </div>
+		            </md-input-container>
+		            <!-- Category -->
+		            <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+		                <label>Category</label>
+		                <input type="text" name="Category{{$index}}" required ng-model="task.category">
+		                <div ng-messages="form.taskForm['Category' + $index].$error" ng-if="form.taskForm['Category' + $index].$touched">
+		                    <div ng-message="required">Category is required.</div>
+		                </div>
+		            </md-input-container>
+		        </div>
+ 			</md-card-content>
+ 		</md-card>
+ 	</form>
+ </div>

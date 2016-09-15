@@ -45,13 +45,13 @@ adminModule
 				$scope.task.live_date = $scope.task.live_date.toDateString();
 
 				Task.store($scope.task)
-					.success(function(duplicate){
-						if(duplicate){
+					.success(function(data){
+						if(typeof data === 'boolean'){
 							$scope.busy = false;
 							return;
 						}
 
-						Preloader.stop();
+						Preloader.stop(data);
 					})
 					.error(function(){
 						Preloader.error();

@@ -26,5 +26,11 @@ sharedModule
 				
 				return $http.post(urlBase + '-paginate?page=' + page, data);
 			},
+			storeMultiple: function(data){
+				return $http.post(urlBase + '-store-multiple', data);
+			},
+			checkDuplicateMultiple: function(data){
+				return $http.post(urlBase + '-check-duplicate-multiple', data);
+			},
 		}
 	}]);

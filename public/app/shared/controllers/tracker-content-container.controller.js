@@ -1,5 +1,5 @@
 sharedModule
-	.controller('trackerContentContainerController', ['$scope', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Category', 'Client', 'Task', 'User', function($scope, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Category, Client, Task, User){
+	.controller('trackerContentContainerController', ['$scope', '$state', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Category', 'Client', 'Task', 'User', function($scope, $state, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Category, Client, Task, User){
 		$scope.toolbar = {};
 
 		$scope.toolbar.childState = 'Tracker';
@@ -35,17 +35,20 @@ sharedModule
 				$scope.task.no_matches = false;
 				$scope.task.items = [];
 				$scope.searched = false;
+
+				$scope.init($scope.subheader.current.request);
 			}
 		};
 		
 		$scope.searchUserInput = function(){
-			$scope.task.busy = true;
 			$scope.isLoading = true;
   			$scope.task.show = false;
-  			
-  			$scope.query = {};
-  			$scope.query.searchText = $scope.toolbar.searchText;
-  			$scope.query.withTrashed = true;
+  			$scope.searched = true;
+  			$scope.init($scope.subheader.current.request, true);
+
+  		// 	$scope.query = {};
+  		// 	$scope.query.searchText = $scope.toolbar.searchText;
+  		// 	$scope.query.withTrashed = true;
 
   		// 	Setting.search($scope.subheader.currentNavItem, $scope.query)
   		// 		.success(function(data){
@@ -76,15 +79,15 @@ sharedModule
 		      	parent: angular.element(document.body),
 		      	fullscreen: true,
 		    })
-		     .then(function() {
+		     .then(function(data) {
+		     	pushItem(data);
+		     	$scope.task.new.push(data);
 		    	$scope.task.busy = true;
-		    	$scope.isLoading = true;
-      			$scope.task.show = false;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
 			    Preloader.notify(message)
 			    	.then(function(){
-					    $scope.init($scope.subheader.current.request);
+				     	$scope.task.busy = false;
 			    	})
 		    }, function() {
 		    	return;
@@ -153,6 +156,13 @@ sharedModule
 							$scope.selectMultiple = true;
 							$scope.fab.label = 'Assign';
 							$scope.fab.icon = this.icon;
+						},
+					},
+					{
+						'label': 'Upload',
+						'icon': 'mdi-upload',
+						action: function(){
+							$state.go('main.upload');
 						},
 					},
 				],
@@ -361,7 +371,7 @@ sharedModule
 			$scope.toolbar.items.push(filter);
 		}
 
-		$scope.init = function(request){
+		$scope.init = function(request, searched){
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;
@@ -374,15 +384,21 @@ sharedModule
 
 			$scope.task = {};
 			$scope.task.items = [];
+			$scope.task.new = [];
+			$scope.toolbar.items = [];
 
-			if($scope.searched)
+			if(searched)
 			{
+	  			request.searchText = $scope.toolbar.searchText;
+			}
+			else{
 				$scope.searchBar = false;
 				$scope.toolbar.searchText = '';
 				$scope.toolbar.searchItem = '';
 				$scope.task.page = 1;
 				$scope.task.no_matches = false;
 				$scope.searched = false;
+				request.searchText = null;
 			}
 
 			// 2 is default so the next page to be loaded will be page 2 

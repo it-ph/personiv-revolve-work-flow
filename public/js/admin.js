@@ -66,6 +66,27 @@ adminModule
 					},
 				}
 			})
+			.state('main.upload', {
+				url: 'upload',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'uploadContentContainerController',
+					},
+					'toolbar@main.upload': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.upload': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					// 'subheader@main.upload': {
+					// 	templateUrl: '/app/components/admin/templates/subheaders/upload-subheader.template.html',
+					// },
+					'content@main.upload':{
+						templateUrl: '/app/components/admin/templates/content/upload-content.template.html',
+					},
+				}
+			})
 	}]);
 adminModule
 	.controller('dashboardContentContainerController', ['$scope', 'Preloader', 'User', function($scope, Preloader, User){
@@ -322,6 +343,9 @@ adminModule
 				    	fetchUnreadNotifications();
 				    	var message = data.sender.name + ' created a new task.';
 				    	Preloader.newNotification(message);
+
+				    	// if state is tracker 
+
 				    }),
 			    ];
 			})
@@ -1066,13 +1090,13 @@ adminModule
 				$scope.task.live_date = $scope.task.live_date.toDateString();
 
 				Task.store($scope.task)
-					.success(function(duplicate){
-						if(duplicate){
+					.success(function(data){
+						if(typeof data === 'boolean'){
 							$scope.busy = false;
 							return;
 						}
 
-						Preloader.stop();
+						Preloader.stop(data);
 					})
 					.error(function(){
 						Preloader.error();

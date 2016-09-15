@@ -122,6 +122,9 @@ adminModule
 				    	fetchUnreadNotifications();
 				    	var message = data.sender.name + ' created a new task.';
 				    	Preloader.newNotification(message);
+
+				    	// if state is tracker 
+
 				    }),
 			    ];
 			})

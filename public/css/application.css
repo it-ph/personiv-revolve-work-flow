@@ -243,6 +243,11 @@ md-content.dirty-white {
   width: 200px;
   height: 200px; }
 
+.drop-zone {
+  height: 100%; }
+  .drop-zone img {
+    width: 150px; }
+
 /* transition duration */
 .transition, .fade-transition, .main-view {
   -webkit-transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);

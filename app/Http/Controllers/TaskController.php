@@ -6,6 +6,8 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use App\Task;
+use App\Category;
+use App\Client;
 use App\User;
 use Carbon\Carbon;
 use Auth;
@@ -15,6 +17,82 @@ use App\Events\Test;
 
 class TaskController extends Controller
 {
+    /**
+     * Store multiple tasks.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function storeMultiple(Request $request)
+    {
+        for ($i=0; $i < count($request->all()); $i++) { 
+            $this->validate($request, [
+                $i.'.delivery_date' => 'required',
+                $i.'.live_date' => 'required',
+                $i.'.file_name' => 'required',
+                $i.'.category' => 'required',
+                $i.'.client' => 'required',
+            ]);
+
+            $category = Category::where('name', $request->input($i.'.category'))->first();
+
+            if(!$category)
+            {
+                $category = new Category;
+                $category->name = $request->input($i.'.category');
+                $category->save();
+            }
+
+            $client = Client::where('name', $request->input($i.'.client'))->first();
+
+            if(!$client)
+            {
+                $client = new Client;
+                $client->name = $request->input($i.'.client');
+                $client->save();
+            }
+
+            $task = new Task;
+
+            $task->delivery_date = Carbon::parse($request->input($i.'.delivery_date'));
+            $task->live_date = Carbon::parse($request->input($i.'.live_date'));
+            $task->file_name = $request->input($i.'.file_name');
+            $task->client_id = $client->id;
+            $task->category_id = $category->id;
+            $task->status = 'pending';
+            // $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
+
+            $task->save();
+        }
+    }
+
+    /**
+     * Checks the requests for duplicates and returns it back with a duplicate property.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function checkDuplicateMultiple(Request $request)
+    {
+        $tasks = array();
+
+        for ($i=0; $i < count($request->all()); $i++) {
+            $task = new Task;
+            
+            $task->file_name = $request->input($i.'.file_name');
+            $task->delivery_date = $request->input($i.'.delivery_date');
+            $task->live_date = $request->input($i.'.live_date');
+            $task->category = $request->input($i.'.category');
+            $task->client = $request->input($i.'.client');
+
+            $task->duplicate = Task::where('file_name', $request->input($i.'.file_name'))->first() ? true : false;
+
+            array_push($tasks, $task);
+        }
+
+        return $tasks;
+    }
+
     /**
      * Checks if the task already exists.
      *
@@ -71,7 +149,12 @@ class TaskController extends Controller
             }
         }
 
-        return $tasks->paginate($request->paginate);
+        if($request->searchText)
+        {
+            $tasks->where('file_name', 'like', '%'. $request->searchText .'%');
+        }
+
+        return $tasks->orderBy('created_at')->paginate($request->paginate);
     }
     /**
      * Display a listing of the resource.
@@ -140,6 +223,8 @@ class TaskController extends Controller
             // broadcast the notifications - task, sender, recipient
             event(new PusherTaskCreated($task, Auth::user(), $user));
         }
+
+        return Task::with(['category' => function($query){ $query->withTrashed(); }])->with(['client' => function($query){ $query->withTrashed(); }])->where('id', $task->id)->first();
     }
 
     /**

@@ -6,8 +6,31 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 
+use App\Spreadsheet;
+use Carbon\Carbon;
+use File;
+use Storage;
+use Excel;
+
+
 class SpreadsheetController extends Controller
 {
+    /**
+     * Read the contents of the file.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function read($id)
+    {
+        $spreadsheet = Spreadsheet::where('id', $id)->first();
+
+        $items = Excel::load(storage_path() .'/app'. $spreadsheet->path, function($reader){
+            $reader->setDateFormat('Y-m-d');
+        })->get();
+
+        return $items;
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -36,7 +59,17 @@ class SpreadsheetController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $spreadsheet = new Spreadsheet;
+
+        $spreadsheet->file_name = str_random(10).'.xls';
+
+        $spreadsheet->path = '/public/' . Carbon::now()->toDateString() . '/' . $spreadsheet->file_name;
+
+        $spreadsheet->save();
+
+        Storage::put($spreadsheet->path, file_get_contents($request->file('file')));
+
+        return $spreadsheet;
     }
 
     /**

@@ -3,14 +3,16 @@ sharedModule
 		var dataHolder = null;
 
 		return {
-			customNotification: function(data){
-				dataHolder = data;
-				$mdToast.show({
-		          	hideDelay   : 3000,
-		          	position    : 'bottom right',
-		          	controller  : 'customNotificationToastController',
-		          	templateUrl : '/app/shared/templates/toasts/custom-notification-toast.template.html'
-		        });
+			alert: function(title, message){
+				$mdDialog.show(
+					$mdDialog.alert()
+				        .parent(angular.element($('body')))
+				        .clickOutsideToClose(true)
+				        .title(title)
+				        .textContent(message)
+				        .ariaLabel(title)
+				        .ok('Got it!')
+				    );
 			},
 			newNotification: function(message, action) {
 				var toast = $mdToast.simple()
