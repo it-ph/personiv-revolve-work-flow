@@ -9,11 +9,13 @@ use Illuminate\Broadcasting\PresenceChannel;
 use Illuminate\Broadcasting\InteractsWithSockets;
 use Illuminate\Contracts\Broadcasting\ShouldBroadcast;
 
-class Test implements ShouldBroadcast
+class PusherNotifyDesignerForNewTask implements ShouldBroadcast
 {
     use InteractsWithSockets, SerializesModels;
 
-    public $notification;
+    public $data;
+
+    public $sender;
 
     protected $recipient;
 
@@ -22,9 +24,10 @@ class Test implements ShouldBroadcast
      *
      * @return void
      */
-    public function __construct($notification, $recipient)
+    public function __construct($data, $sender, $recipient)
     {
-        $this->notification = $notification;
+        $this->data = $data;
+        $this->sender = $sender;
         $this->recipient = $recipient;
     }
 

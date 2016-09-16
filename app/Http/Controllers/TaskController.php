@@ -8,11 +8,14 @@ use App\Http\Requests;
 use App\Task;
 use App\Category;
 use App\Client;
+use App\Spreadsheet;
 use App\User;
 use Carbon\Carbon;
 use Auth;
 use App\Notifications\TaskCreated;
+use App\Notifications\SpreadsheetCreated;
 use App\Events\PusherTaskCreated;
+use App\Events\PusherSpreadsheetCreated;
 use App\Events\Test;
 
 class TaskController extends Controller
@@ -25,6 +28,8 @@ class TaskController extends Controller
      */
     public function storeMultiple(Request $request)
     {
+        $filedSheet = false;
+
         for ($i=0; $i < count($request->all()); $i++) { 
             $this->validate($request, [
                 $i.'.delivery_date' => 'required',
@@ -32,6 +37,7 @@ class TaskController extends Controller
                 $i.'.file_name' => 'required',
                 $i.'.category' => 'required',
                 $i.'.client' => 'required',
+                $i.'.spreadsheet_id' => 'required',
             ]);
 
             $category = Category::where('name', $request->input($i.'.category'))->first();
@@ -60,9 +66,28 @@ class TaskController extends Controller
             $task->client_id = $client->id;
             $task->category_id = $category->id;
             $task->status = 'pending';
-            // $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
+            $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
 
             $task->save();
+
+            if(!$filedSheet){
+                $spreadsheet = Spreadsheet::where('id', $request->input($i.'.spreadsheet_id'))->first();
+
+                $spreadsheet->filed = true;
+
+                $spreadsheet->save();
+
+                $filedSheet = true;
+
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - spreadsheet, sender
+                    $user->notify(new SpreadsheetCreated($spreadsheet, Auth::user()));
+                    // broadcast the notifications - spreadsheet, sender, recipient
+                    event(new PusherSpreadsheetCreated($spreadsheet, Auth::user(), $user));
+                }
+            }
         }
     }
 
@@ -77,6 +102,12 @@ class TaskController extends Controller
         $tasks = array();
 
         for ($i=0; $i < count($request->all()); $i++) {
+
+            if(!$request->input($i.'.delivery_date') && !$request->input($i.'.live_date') && !$request->input($i.'.file_name') && !$request->input($i.'.client') && !$request->input($i.'.category'))
+            {
+                continue;         
+            }
+
             $task = new Task;
             
             $task->file_name = $request->input($i.'.file_name');
@@ -84,6 +115,7 @@ class TaskController extends Controller
             $task->live_date = $request->input($i.'.live_date');
             $task->category = $request->input($i.'.category');
             $task->client = $request->input($i.'.client');
+            $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
 
             $task->duplicate = Task::where('file_name', $request->input($i.'.file_name'))->first() ? true : false;
 
@@ -134,6 +166,7 @@ class TaskController extends Controller
                 if(!$request->input('with')[$i]['withTrashed'])
                 {
                     $tasks->with($request->input('with')[$i]['relation']);
+                    continue;
                 }
 
                 // if relation includes deleted records

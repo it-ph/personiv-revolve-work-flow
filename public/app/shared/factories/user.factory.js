@@ -52,5 +52,8 @@ sharedModule
 			markAsRead: function(id){
 				return $http.get(urlBase + '-mark-as-read/' + id);
 			},
+			enlist: function(data){
+				return $http.post(urlBase + '-enlist', data);
+			},
 		}
 	}]);

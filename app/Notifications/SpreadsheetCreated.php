@@ -1,27 +1,27 @@
 <?php
 
 namespace App\Notifications;
-use App\Task;
+use App\Spreadsheet;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class TaskCreated extends Notification
+class SpreadsheetCreated extends Notification
 {
     use Queueable;
 
-    protected $task;
+    protected $spreadsheet;
     protected $sender;
- 
+
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct(Task $task, $sender)
+    public function __construct(Spreadsheet $spreadsheet, $sender)
     {
-        $this->task = $task;
+        $this->spreadsheet = $spreadsheet;
         $this->sender = $sender;
     }
 
@@ -59,7 +59,7 @@ class TaskCreated extends Notification
     public function toArray($notifiable)
     {
         return [
-            'attachment' => $this->task,
+            'attachment' => $this->spreadsheet,
             'sender' => $this->sender,
         ];
     }

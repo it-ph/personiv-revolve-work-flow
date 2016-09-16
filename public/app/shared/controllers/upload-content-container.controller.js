@@ -1,13 +1,13 @@
 sharedModule
-	.controller('uploadContentContainerController', ['$scope', '$filter', '$mdDialog', '$state', 'FileUploader', 'Preloader', 'Spreadsheet', 'Category', 'Client', 'Task', function($scope, $filter, $mdDialog, $state, FileUploader, Preloader, Spreadsheet, Category, Client, Task){
+	.controller('uploadContentContainerController', ['$scope', '$filter', '$mdDialog', '$state', 'FileUploader', 'Preloader', 'Spreadsheet', 'Task', function($scope, $filter, $mdDialog, $state, FileUploader, Preloader, Spreadsheet, Task){
 		$scope.toolbar = {};
 		$scope.form = {};
 
 		$scope.toolbar.items = [];
-		$scope.toolbar.childState = 'Upload Spreadsheet';
+		$scope.toolbar.childState = 'Upload Sheet';
 
 		$scope.toolbar.back = function(){
-			$state.go('main.tracker');
+			$state.go('main.sheets');
 		}
 
 		$scope.toolbar.showBack = true;
@@ -80,6 +80,26 @@ sharedModule
 		};
 
 		$scope.checkDuplicate = function(data){
+			var nextLoop = true;
+			var idx = $scope.tasks.indexOf(data);
+			var duplicate = false;
+			// checks for duplicate file name within the form.
+			angular.forEach($scope.tasks, function(task, key){
+				if(nextLoop && key != idx){
+					if(data.file_name == task.file_name){
+						duplicate = true;
+						nextLoop = false;
+					}
+				}
+			});
+
+			if(duplicate){
+				return;
+			}
+			else{
+				data.duplicate = false;
+			}
+
 			Preloader.checkDuplicate('task', data)
 				.success(function(bool){
 					data.duplicate = bool;
@@ -103,26 +123,31 @@ sharedModule
 
 		}
 
-		var pushItem = function(sheet){
-			angular.forEach(sheet, function(item){
-				if(!item.delivery_date && !item.live_date && !item.file_name && !item.client && !item.category)
-				{
-					// skip this part
-				}
-				else{
-					item.delivery_date = new Date(item.delivery_date);
-					item.live_date = new Date(item.live_date);
-					$scope.tasks.push(item);
+		var pushItem = function(data){
+			angular.forEach(data, function(item, idx){
+				var nextLoop = true;
+				// compare current item with other items on the array
+				angular.forEach(data, function(other, key){
+					if(nextLoop && idx != key)
+					{
+						if(item.file_name == other.file_name){
+							item.duplicate = true;
+							nextLoop = false;
+						}
+					}
+				})
 
-					var filter = {};
+				item.delivery_date = new Date(item.delivery_date);
+				item.live_date = new Date(item.live_date);
+				$scope.tasks.push(item);
 
-					filter.display = item.file_name;
+				var filter = {};
 
-					$scope.toolbar.items.push(filter);
-				}
+				filter.display = item.file_name;
+
+				$scope.toolbar.items.push(filter);
 			});
 		}
-
 
 		$scope.excelUploader.onCompleteItem  = function(data, response){			
 			Spreadsheet.read(response.id)
@@ -133,12 +158,14 @@ sharedModule
 					{
 						angular.forEach(data, function(sheet){
 							angular.forEach(sheet, function(item){
+								item.spreadsheet_id = response.id;
 								$scope.tasks.push(item);
 							})
 						});
 					}
 					else {
 						angular.forEach(data, function(item){
+							item.spreadsheet_id = response.id;
 							$scope.tasks.push(item);
 						})
 					}
@@ -161,17 +188,7 @@ sharedModule
 		}
 
 		var busy = false;
-		var duplicate = false;
-
-		Category.index()
-			.success(function(data){
-				$scope.categories = data;
-			})
-
-		Client.index()
-			.success(function(data){
-				$scope.clients = data;
-			})		
+		var duplicate = false;	
 
 		$scope.fab.action = function(){
 			if($scope.form.taskForm.$invalid){

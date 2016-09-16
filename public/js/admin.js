@@ -79,11 +79,29 @@ adminModule
 					'left-sidenav@main.upload': {
 						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
 					},
-					// 'subheader@main.upload': {
-					// 	templateUrl: '/app/components/admin/templates/subheaders/upload-subheader.template.html',
-					// },
 					'content@main.upload':{
 						templateUrl: '/app/components/admin/templates/content/upload-content.template.html',
+					},
+				}
+			})
+			.state('main.sheets', {
+				url: 'sheets',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'sheetsContentContainerController',
+					},
+					'toolbar@main.sheets': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.sheets': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'subheader@main.sheets': {
+						templateUrl: '/app/components/admin/templates/subheaders/sheets-subheader.template.html',
+					},
+					'content@main.sheets':{
+						templateUrl: '/app/components/admin/templates/content/sheets-content.template.html',
 					},
 				}
 			})
@@ -234,6 +252,11 @@ adminModule
 				'label': 'Dashboard',
 			},
 			{
+				'state': 'main.sheets',
+				'icon': 'mdi-file-excel',
+				'label': 'Sheets',
+			},
+			{
 				'state': 'main.tracker',
 				'icon': 'mdi-view-list',
 				'label': 'Tracker',
@@ -302,6 +325,31 @@ adminModule
 							})
 					}
 				}
+				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
+					notif.message = 'created a new sheet.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$user = data;
+								$state.go('main.sheet', {'sheetID': id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\TaskAssignedToDesigner'){
+					notif.message = 'assigned a task to ' + notif.data.attachment.designer.name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$user = data;
+								$state.go('main.sheet', {'sheetID': id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -344,7 +392,25 @@ adminModule
 				    	var message = data.sender.name + ' created a new task.';
 				    	Preloader.newNotification(message);
 
-				    	// if state is tracker 
+				    	// if state is trackers 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherSpreadsheetCreated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' created a new sheet.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is sheets 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskAssignedToDesigner', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' assigned a task to ' + data.data.name + '.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is sheets 
 
 				    }),
 			    ];
@@ -847,6 +913,60 @@ adminModule
 
 		$scope.action = function(idx){
 			$mdBottomSheet.hide(idx);
+		}
+	}]);
+adminModule
+	.controller('assignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
+		$scope.tasks = Preloader.get();
+		$scope.busy = false;
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.setDesigner = function(){
+			angular.forEach($scope.tasks, function(task, key){
+				if(task.include){
+					task.designer_id = $scope.designer;
+				}
+			})
+		}
+
+		var query = {
+			'where': [
+				{
+					'label': 'role',
+					'condition': '=',
+					'value': 'designer',
+				}
+			],
+		}
+
+		User.enlist(query)
+			.success(function(data){
+				$scope.users = data;
+			})
+
+		$scope.submit = function(){
+			if($scope.assignTaskForm.$invalid){
+				angular.forEach($scope.assignTaskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.busy){
+				$scope.busy = true;
+				DesignerAssigned.store($scope.tasks)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
 		}
 	}]);
 adminModule

@@ -1,27 +1,27 @@
 <?php
 
 namespace App\Notifications;
-use App\Task;
+use App\DesignerAssigned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class TaskCreated extends Notification
+class TaskAssignedToDesigner extends Notification
 {
     use Queueable;
 
-    protected $task;
+    protected $designer_assigned;
     protected $sender;
- 
+
     /**
      * Create a new notification instance.
      *
      * @return void
      */
-    public function __construct(Task $task, $sender)
+    public function __construct(DesignerAssigned $designer_assigned, $sender)
     {
-        $this->task = $task;
+        $this->designer_assigned = $designer_assigned;
         $this->sender = $sender;
     }
 
@@ -59,7 +59,7 @@ class TaskCreated extends Notification
     public function toArray($notifiable)
     {
         return [
-            'attachment' => $this->task,
+            'attachment' => $this->designer_assigned,
             'sender' => $this->sender,
         ];
     }

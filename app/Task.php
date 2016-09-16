@@ -26,9 +26,14 @@ class Task extends Model
     	return $this->belongsTo('App\Spreadsheet');
     }
 
-    public function assignment()
+    public function designer_assigned()
     {
-    	return $this->hasOne('App\Assignment');
+    	return $this->hasOne('App\DesignerAssigned');
+    }
+
+    public function quality_control_assigned()
+    {
+        return $this->hasOne('App\QualityControlAssigned');
     }
 
     public function comments()

@@ -16,6 +16,23 @@ use Excel;
 class SpreadsheetController extends Controller
 {
     /**
+     * Paginate list of sheets.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function paginate(Request $request)
+    {
+        $spreadsheets = Spreadsheet::query();
+
+        if($request->searchText)
+        {
+            $spreadsheets->where('file_name', 'like', '%'. $request->searchText .'%');
+        }
+
+        return $spreadsheets->with('tasks')->where('filed', 1)->orderBy('created_at')->paginate(10);
+    }
+
+    /**
      * Read the contents of the file.
      *
      * @return \Illuminate\Http\Response
@@ -27,6 +44,8 @@ class SpreadsheetController extends Controller
         $items = Excel::load(storage_path() .'/app'. $spreadsheet->path, function($reader){
             $reader->setDateFormat('Y-m-d');
         })->get();
+
+        Storage::delete($spreadsheet->path);
 
         return $items;
     }

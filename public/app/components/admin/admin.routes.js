@@ -78,11 +78,29 @@ adminModule
 					'left-sidenav@main.upload': {
 						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
 					},
-					// 'subheader@main.upload': {
-					// 	templateUrl: '/app/components/admin/templates/subheaders/upload-subheader.template.html',
-					// },
 					'content@main.upload':{
 						templateUrl: '/app/components/admin/templates/content/upload-content.template.html',
+					},
+				}
+			})
+			.state('main.sheets', {
+				url: 'sheets',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'sheetsContentContainerController',
+					},
+					'toolbar@main.sheets': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.sheets': {
+						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'subheader@main.sheets': {
+						templateUrl: '/app/components/admin/templates/subheaders/sheets-subheader.template.html',
+					},
+					'content@main.sheets':{
+						templateUrl: '/app/components/admin/templates/content/sheets-content.template.html',
 					},
 				}
 			})

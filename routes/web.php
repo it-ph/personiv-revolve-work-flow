@@ -64,6 +64,7 @@ Route::get('user-quality_control-paginate', 'UserController@qualityControlPagina
 Route::get('category-paginate', 'CategoryController@paginate');
 Route::get('client-paginate', 'ClientController@paginate');
 Route::post('task-paginate', 'TaskController@paginate');
+Route::post('spreadsheet-paginate', 'SpreadsheetController@paginate');
 
 /* Enlist */
 Route::post('category-enlist', 'CategoryController@enlist');

@@ -77,6 +77,177 @@ sharedModule
 		};
 	}]);
 sharedModule
+	.controller('sheetsContentContainerController', ['$scope', '$filter', '$state', 'Preloader', 'Spreadsheet', function($scope, $filter, $state, Preloader, Spreadsheet){
+		$scope.toolbar = {};
+
+		$scope.toolbar.childState = 'Sheets';
+
+		$scope.toolbar.getItems = function(query){
+			$scope.showInactive = true;
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.sheet.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.sheet.busy = false;
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+			$scope.showInactive = false;
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.sheet.page = 1;
+				$scope.sheet.no_matches = false;
+				$scope.sheet.items = [];
+				$scope.searched = false;
+
+				$scope.init();
+			}
+		};
+
+		/**
+		 * Object for fab
+		 *
+		*/
+		$scope.fab = {};
+
+		$scope.fab.icon = 'mdi-upload';
+		$scope.fab.label = 'Upload';
+		$scope.fab.action = function(){
+			$state.go('main.upload');
+		};
+
+		$scope.fab.show = true;
+
+		/**
+		 * Object for subheader
+		 *
+		*/
+		$scope.subheader = {};
+
+		$scope.subheader.show = true;
+
+		$scope.subheader.sort = [
+			{
+				'label': 'Tasks Number',
+				'type': 'first_letter',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.subheader.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.sheet.show = false;
+
+  			$scope.init();
+		}
+
+		$scope.subheader.toggleActive = function(){
+			$scope.showInactive = !$scope.showInactive;
+		}
+
+		$scope.subheader.sortBy = function(filter){
+			filter.sortReverse = !filter.sortReverse;			
+			$scope.sortType = filter.type;
+			$scope.sortReverse = filter.sortReverse;
+		}
+
+		var pushItem = function(item){
+			item.updated_at = new Date(item.updated_at);
+			item.first_letter = item.tasks.length
+		}
+
+		$scope.init = function(request)
+		{
+			$scope.sheet = {};
+			$scope.sheet.items = [];
+
+			if($scope.searched)
+			{
+				$scope.searchBar = false;
+				$scope.toolbar.searchText = '';
+				$scope.toolbar.searchItem = '';
+				$scope.sheet.page = 1;
+				$scope.sheet.no_matches = false;
+				$scope.searched = false;
+			}
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.sheet.page = 2;
+
+			Spreadsheet.paginate(request)
+				.success(function(data){
+					$scope.sheet.details = data;
+					$scope.sheet.items = data.data;
+					$scope.sheet.show = true;
+
+					/* Fab */
+					$scope.fab.show = true;
+
+					// Hides inactive records
+					$scope.showInactive = false;
+
+					if(data.data.length){
+						// iterate over each record and set the updated_at date and first letter
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+
+					}
+
+					$scope.sheet.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.sheet.busy || ($scope.sheet.page > $scope.sheet.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.sheet.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Setting.paginate(request, $scope.sheet.page)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.sheet.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.sheet.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.sheet.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				})
+		}
+
+		$scope.init();
+	}]);
+sharedModule
 	.controller('trackerContentContainerController', ['$scope', '$state', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Category', 'Client', 'Task', 'User', function($scope, $state, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Category, Client, Task, User){
 		$scope.toolbar = {};
 
@@ -159,7 +330,6 @@ sharedModule
 		    })
 		     .then(function(data) {
 		     	pushItem(data);
-		     	$scope.task.new.push(data);
 		    	$scope.task.busy = true;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
@@ -213,6 +383,10 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -234,13 +408,23 @@ sharedModule
 							$scope.selectMultiple = true;
 							$scope.fab.label = 'Assign';
 							$scope.fab.icon = this.icon;
-						},
-					},
-					{
-						'label': 'Upload',
-						'icon': 'mdi-upload',
-						action: function(){
-							$state.go('main.upload');
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'assignTasksDialogController',
+							      	templateUrl: '/app/components/admin/templates/dialogs/assign-tasks-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectMultiple = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
 						},
 					},
 				],
@@ -256,6 +440,10 @@ sharedModule
 						{
 							'relation' : 'client',
 							'withTrashed': true,
+						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
 						},
 					],
 					'where': [
@@ -283,6 +471,10 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -309,6 +501,14 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -334,6 +534,14 @@ sharedModule
 						{
 							'relation' : 'client',
 							'withTrashed': true,
+						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
 						},
 					],
 					'where': [
@@ -462,7 +670,6 @@ sharedModule
 
 			$scope.task = {};
 			$scope.task.items = [];
-			$scope.task.new = [];
 			$scope.toolbar.items = [];
 
 			if(searched)
@@ -548,15 +755,15 @@ sharedModule
 
 	}]);
 sharedModule
-	.controller('uploadContentContainerController', ['$scope', '$filter', '$mdDialog', '$state', 'FileUploader', 'Preloader', 'Spreadsheet', 'Category', 'Client', 'Task', function($scope, $filter, $mdDialog, $state, FileUploader, Preloader, Spreadsheet, Category, Client, Task){
+	.controller('uploadContentContainerController', ['$scope', '$filter', '$mdDialog', '$state', 'FileUploader', 'Preloader', 'Spreadsheet', 'Task', function($scope, $filter, $mdDialog, $state, FileUploader, Preloader, Spreadsheet, Task){
 		$scope.toolbar = {};
 		$scope.form = {};
 
 		$scope.toolbar.items = [];
-		$scope.toolbar.childState = 'Upload Spreadsheet';
+		$scope.toolbar.childState = 'Upload Sheet';
 
 		$scope.toolbar.back = function(){
-			$state.go('main.tracker');
+			$state.go('main.sheets');
 		}
 
 		$scope.toolbar.showBack = true;
@@ -629,6 +836,26 @@ sharedModule
 		};
 
 		$scope.checkDuplicate = function(data){
+			var nextLoop = true;
+			var idx = $scope.tasks.indexOf(data);
+			var duplicate = false;
+			// checks for duplicate file name within the form.
+			angular.forEach($scope.tasks, function(task, key){
+				if(nextLoop && key != idx){
+					if(data.file_name == task.file_name){
+						duplicate = true;
+						nextLoop = false;
+					}
+				}
+			});
+
+			if(duplicate){
+				return;
+			}
+			else{
+				data.duplicate = false;
+			}
+
 			Preloader.checkDuplicate('task', data)
 				.success(function(bool){
 					data.duplicate = bool;
@@ -652,26 +879,31 @@ sharedModule
 
 		}
 
-		var pushItem = function(sheet){
-			angular.forEach(sheet, function(item){
-				if(!item.delivery_date && !item.live_date && !item.file_name && !item.client && !item.category)
-				{
-					// skip this part
-				}
-				else{
-					item.delivery_date = new Date(item.delivery_date);
-					item.live_date = new Date(item.live_date);
-					$scope.tasks.push(item);
+		var pushItem = function(data){
+			angular.forEach(data, function(item, idx){
+				var nextLoop = true;
+				// compare current item with other items on the array
+				angular.forEach(data, function(other, key){
+					if(nextLoop && idx != key)
+					{
+						if(item.file_name == other.file_name){
+							item.duplicate = true;
+							nextLoop = false;
+						}
+					}
+				})
 
-					var filter = {};
+				item.delivery_date = new Date(item.delivery_date);
+				item.live_date = new Date(item.live_date);
+				$scope.tasks.push(item);
 
-					filter.display = item.file_name;
+				var filter = {};
 
-					$scope.toolbar.items.push(filter);
-				}
+				filter.display = item.file_name;
+
+				$scope.toolbar.items.push(filter);
 			});
 		}
-
 
 		$scope.excelUploader.onCompleteItem  = function(data, response){			
 			Spreadsheet.read(response.id)
@@ -682,12 +914,14 @@ sharedModule
 					{
 						angular.forEach(data, function(sheet){
 							angular.forEach(sheet, function(item){
+								item.spreadsheet_id = response.id;
 								$scope.tasks.push(item);
 							})
 						});
 					}
 					else {
 						angular.forEach(data, function(item){
+							item.spreadsheet_id = response.id;
 							$scope.tasks.push(item);
 						})
 					}
@@ -710,17 +944,7 @@ sharedModule
 		}
 
 		var busy = false;
-		var duplicate = false;
-
-		Category.index()
-			.success(function(data){
-				$scope.categories = data;
-			})
-
-		Client.index()
-			.success(function(data){
-				$scope.clients = data;
-			})		
+		var duplicate = false;	
 
 		$scope.fab.action = function(){
 			if($scope.form.taskForm.$invalid){
@@ -769,136 +993,6 @@ sharedModule
 					});
 			}
 		};
-	}]);
-sharedModule
-	.service('Preloader', ['$mdDialog', '$mdToast', '$http', function($mdDialog, $mdToast, $http){
-		var dataHolder = null;
-
-		return {
-			alert: function(title, message){
-				$mdDialog.show(
-					$mdDialog.alert()
-				        .parent(angular.element($('body')))
-				        .clickOutsideToClose(true)
-				        .title(title)
-				        .textContent(message)
-				        .ariaLabel(title)
-				        .ok('Got it!')
-				    );
-			},
-			newNotification: function(message, action) {
-				var toast = $mdToast.simple()
-			      	.textContent(message)
-			      	.action(action)
-			      	.highlightAction(true)
-			      	.highlightClass('md-primary')// Accent is used by default, this just demonstrates the usage.
-			      	.position('bottom right');
-
-			    var audio = new Audio('/audio/notif.mp3')
-			    audio.play();
-			    
-			    return $mdToast.show(toast);
-			},
-			/* Notifies a user with a message */
-			notify: function(message){
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent(message)
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
-			},
-			/* Starts the preloader */
-			preload: function(){
-				return $mdDialog.show({
-					templateUrl: '/app/shared/templates/loading.html',
-				    parent: angular.element(document.body),
-				});
-			},
-			/* Stops the preloader */
-			stop: function(data){
-				return $mdDialog.hide(data);
-			},
-			/* Shows error message if AJAX failed */
-			error: function(){
-				return $mdDialog.show(
-			    	$mdDialog.alert()
-				        .parent(angular.element($('body')))
-				        .clickOutsideToClose(true)
-				        .title('Oops! Something went wrong!')
-				        .content('An error occured. Please contact administrator for assistance.')
-				        .ariaLabel('Error Message')
-				        .ok('Got it!')
-				);
-			},
-			/* Send temporary data for retrival */
-			set: function(data){
-				dataHolder = data;
-			},
-			/* Retrieves data */
-			get: function(){
-				return dataHolder;
-			},
-			checkDuplicate: function(urlBase, data){
-				return $http.post(urlBase + '-check-duplicate', data);
-			},
-		};
-	}]);
-sharedModule
-	.service('Setting', ['$http', '$mdToast', function($http, $mdToast){
-		return {
-			paginate: function(type, page){
-				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user-designers' : 'user-quality_control'));
-
-				return $http.get(urlBase + '-paginate?page=' + page);
-			},
-			search: function(type, data){
-				var urlBase = type == 'Categories' ? 'category-enlist' : (type == 'Clients' ? 'client-enlist' : 'user-enlist');
-
-				return $http.post(urlBase, data);
-			},
-			settingController: function(action, type){
-				// removes white spaces
-				type = type.replace(/\s/g, '');
-				return action + type + 'DialogController';
-			},
-			settingDialogTemplate: function(action, type){
-				if(type == 'Designers' || type == 'Quality Control'){
-					return action + '-users-dialog.template.html';
-				}
-
-				// replaces white spaces with dashes and lower cases all captial letters
-				type = type.replace(/\s+/g, '-').toLowerCase();
-
-				return action + '-' + type + '-dialog.template.html';
-			},
-			fabCreateSuccessMessage: function(type){
-				if(type == 'Categories'){
-					var message = 'A new category has been added.'
-				}
-				else if(type == 'Clients'){
-					var message = 'A new client has been added.'
-				}
-				else if(type == 'Designers'){
-					var message = 'A new designer has been added to your team.'
-				}
-				else if(type == 'Quality Control'){
-					var message = 'A new quality control has been added to your team.'
-				}
-
-				return $mdToast.show(
-			    	$mdToast.simple()
-				        .textContent(message)
-				        .position('bottom right')
-				        .hideDelay(3000)
-			    );
-			},
-			delete: function(type, item){
-				var urlBase = type == 'Categories' ? 'category' : 'client';
-
-				return $http.delete(urlBase + '/' + item.id);
-			}
-		}
 	}]);
 sharedModule
 	.factory('Category', ['$http', function($http){
@@ -1108,6 +1202,9 @@ sharedModule
 			read: function(id){
 				return $http.get(urlBase + '-read/' + id);
 			},
+			paginate: function(request, page){
+				return $http.post(urlBase + '-paginate?page=' + page, request);
+			},
 		}
 	}]);
 sharedModule
@@ -1200,6 +1297,139 @@ sharedModule
 			markAsRead: function(id){
 				return $http.get(urlBase + '-mark-as-read/' + id);
 			},
+			enlist: function(data){
+				return $http.post(urlBase + '-enlist', data);
+			},
+		}
+	}]);
+sharedModule
+	.service('Preloader', ['$mdDialog', '$mdToast', '$http', function($mdDialog, $mdToast, $http){
+		var dataHolder = null;
+
+		return {
+			alert: function(title, message){
+				$mdDialog.show(
+					$mdDialog.alert()
+				        .parent(angular.element($('body')))
+				        .clickOutsideToClose(true)
+				        .title(title)
+				        .textContent(message)
+				        .ariaLabel(title)
+				        .ok('Got it!')
+				    );
+			},
+			newNotification: function(message, action) {
+				var toast = $mdToast.simple()
+			      	.textContent(message)
+			      	.action(action)
+			      	.highlightAction(true)
+			      	.highlightClass('md-primary')// Accent is used by default, this just demonstrates the usage.
+			      	.position('bottom right');
+
+			    var audio = new Audio('/audio/notif.mp3')
+			    audio.play();
+			    
+			    return $mdToast.show(toast);
+			},
+			/* Notifies a user with a message */
+			notify: function(message){
+				return $mdToast.show(
+			    	$mdToast.simple()
+				        .textContent(message)
+				        .position('bottom right')
+				        .hideDelay(3000)
+			    );
+			},
+			/* Starts the preloader */
+			preload: function(){
+				return $mdDialog.show({
+					templateUrl: '/app/shared/templates/loading.html',
+				    parent: angular.element(document.body),
+				});
+			},
+			/* Stops the preloader */
+			stop: function(data){
+				return $mdDialog.hide(data);
+			},
+			/* Shows error message if AJAX failed */
+			error: function(){
+				return $mdDialog.show(
+			    	$mdDialog.alert()
+				        .parent(angular.element($('body')))
+				        .clickOutsideToClose(true)
+				        .title('Oops! Something went wrong!')
+				        .content('An error occured. Please contact administrator for assistance.')
+				        .ariaLabel('Error Message')
+				        .ok('Got it!')
+				);
+			},
+			/* Send temporary data for retrival */
+			set: function(data){
+				dataHolder = data;
+			},
+			/* Retrieves data */
+			get: function(){
+				return dataHolder;
+			},
+			checkDuplicate: function(urlBase, data){
+				return $http.post(urlBase + '-check-duplicate', data);
+			},
+		};
+	}]);
+sharedModule
+	.service('Setting', ['$http', '$mdToast', function($http, $mdToast){
+		return {
+			paginate: function(type, page){
+				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user-designers' : 'user-quality_control'));
+
+				return $http.get(urlBase + '-paginate?page=' + page);
+			},
+			search: function(type, data){
+				var urlBase = type == 'Categories' ? 'category-enlist' : (type == 'Clients' ? 'client-enlist' : 'user-enlist');
+
+				return $http.post(urlBase, data);
+			},
+			settingController: function(action, type){
+				// removes white spaces
+				type = type.replace(/\s/g, '');
+				return action + type + 'DialogController';
+			},
+			settingDialogTemplate: function(action, type){
+				if(type == 'Designers' || type == 'Quality Control'){
+					return action + '-users-dialog.template.html';
+				}
+
+				// replaces white spaces with dashes and lower cases all captial letters
+				type = type.replace(/\s+/g, '-').toLowerCase();
+
+				return action + '-' + type + '-dialog.template.html';
+			},
+			fabCreateSuccessMessage: function(type){
+				if(type == 'Categories'){
+					var message = 'A new category has been added.'
+				}
+				else if(type == 'Clients'){
+					var message = 'A new client has been added.'
+				}
+				else if(type == 'Designers'){
+					var message = 'A new designer has been added to your team.'
+				}
+				else if(type == 'Quality Control'){
+					var message = 'A new quality control has been added to your team.'
+				}
+
+				return $mdToast.show(
+			    	$mdToast.simple()
+				        .textContent(message)
+				        .position('bottom right')
+				        .hideDelay(3000)
+			    );
+			},
+			delete: function(type, item){
+				var urlBase = type == 'Categories' ? 'category' : 'client';
+
+				return $http.delete(urlBase + '/' + item.id);
+			}
 		}
 	}]);
 sharedModule

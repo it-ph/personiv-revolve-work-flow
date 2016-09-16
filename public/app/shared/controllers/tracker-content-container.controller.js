@@ -81,7 +81,6 @@ sharedModule
 		    })
 		     .then(function(data) {
 		     	pushItem(data);
-		     	$scope.task.new.push(data);
 		    	$scope.task.busy = true;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
@@ -135,6 +134,10 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -156,13 +159,23 @@ sharedModule
 							$scope.selectMultiple = true;
 							$scope.fab.label = 'Assign';
 							$scope.fab.icon = this.icon;
-						},
-					},
-					{
-						'label': 'Upload',
-						'icon': 'mdi-upload',
-						action: function(){
-							$state.go('main.upload');
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'assignTasksDialogController',
+							      	templateUrl: '/app/components/admin/templates/dialogs/assign-tasks-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectMultiple = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
 						},
 					},
 				],
@@ -178,6 +191,10 @@ sharedModule
 						{
 							'relation' : 'client',
 							'withTrashed': true,
+						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
 						},
 					],
 					'where': [
@@ -205,6 +222,10 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -231,6 +252,14 @@ sharedModule
 							'relation' : 'client',
 							'withTrashed': true,
 						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -256,6 +285,14 @@ sharedModule
 						{
 							'relation' : 'client',
 							'withTrashed': true,
+						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
 						},
 					],
 					'where': [
@@ -384,7 +421,6 @@ sharedModule
 
 			$scope.task = {};
 			$scope.task.items = [];
-			$scope.task.new = [];
 			$scope.toolbar.items = [];
 
 			if(searched)

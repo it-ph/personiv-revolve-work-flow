@@ -13,6 +13,11 @@ adminModule
 				'label': 'Dashboard',
 			},
 			{
+				'state': 'main.sheets',
+				'icon': 'mdi-file-excel',
+				'label': 'Sheets',
+			},
+			{
 				'state': 'main.tracker',
 				'icon': 'mdi-view-list',
 				'label': 'Tracker',
@@ -81,6 +86,31 @@ adminModule
 							})
 					}
 				}
+				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
+					notif.message = 'created a new sheet.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$user = data;
+								$state.go('main.sheet', {'sheetID': id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\TaskAssignedToDesigner'){
+					notif.message = 'assigned a task to ' + notif.data.attachment.designer.name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$user = data;
+								$state.go('main.sheet', {'sheetID': id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -123,7 +153,25 @@ adminModule
 				    	var message = data.sender.name + ' created a new task.';
 				    	Preloader.newNotification(message);
 
-				    	// if state is tracker 
+				    	// if state is trackers 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherSpreadsheetCreated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' created a new sheet.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is sheets 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskAssignedToDesigner', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' assigned a task to ' + data.data.name + '.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is sheets 
 
 				    }),
 			    ];
