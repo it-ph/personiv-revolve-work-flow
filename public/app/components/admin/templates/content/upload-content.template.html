@@ -1,6 +1,7 @@
 <div layout="column" flex layout-align="center center" class="drop-zone" nv-file-drop uploader="excelUploader" ng-if="!excelUploader.queue.length">
 	<div layout="column" layout-align="center center" layout-padding>
 		<img src="/img/excel.png" alt="Drop Zone">
+		<input type="file" nv-file-select uploader="excelUploader">
 		<h2 class="md-subhead">Drop spreadsheet here.</h2>
 		<h2 class="md-subhead" ng-if="fileError">Spreadsheet must be .xls or .xlsx</h2>
 	</div>
