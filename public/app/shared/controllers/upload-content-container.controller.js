@@ -86,6 +86,7 @@ sharedModule
 			// checks for duplicate file name within the form.
 			angular.forEach($scope.tasks, function(task, key){
 				if(nextLoop && key != idx){
+					console.log(data.file_name == task.file_name);
 					if(data.file_name == task.file_name){
 						duplicate = true;
 						nextLoop = false;
@@ -94,7 +95,7 @@ sharedModule
 			});
 
 			if(duplicate){
-				return;
+				return data.duplicate = true;
 			}
 			else{
 				data.duplicate = false;
