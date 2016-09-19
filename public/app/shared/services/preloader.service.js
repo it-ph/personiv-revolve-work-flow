@@ -3,6 +3,17 @@ sharedModule
 		var dataHolder = null;
 
 		return {
+			confirm: function(data)
+			{
+				var confirm = $mdDialog.confirm()
+			        .title(data.title)
+			        .textContent(data.message)
+			        .ariaLabel(data.title)
+			        .ok(data.ok)
+			        .cancel(data.cancel);
+
+			    return $mdDialog.show(confirm);
+			},
 			alert: function(title, message){
 				$mdDialog.show(
 					$mdDialog.alert()

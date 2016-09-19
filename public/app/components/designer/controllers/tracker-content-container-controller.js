@@ -1,5 +1,5 @@
-sharedModule
-	.controller('trackerContentContainerController', ['$scope', '$state', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Category', 'Client', 'Task', 'User', function($scope, $state, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Category, Client, Task, User){
+designerModule
+	.controller('trackerContentContainerController', ['$scope', '$state', '$filter', '$timeout', '$mdDialog', '$mdToast', '$mdBottomSheet', '$mdMedia', 'Preloader', 'Category', 'Client', 'DesignerAssigned', 'User', function($scope, $state, $filter, $timeout, $mdDialog, $mdToast, $mdBottomSheet, $mdMedia, Preloader, Category, Client, DesignerAssigned, User){
 		$scope.toolbar = {};
 
 		$scope.toolbar.childState = 'Tracker';
@@ -47,37 +47,6 @@ sharedModule
   			$scope.init($scope.subheader.current.request, true);
 		};
 
-		var createTask = function(){
-			$mdDialog.show({
-		      	controller: 'createTasksDialogController',
-		      	templateUrl: '/app/components/admin/templates/dialogs/create-task-dialog.template.html',
-		      	parent: angular.element(document.body),
-		      	fullscreen: true,
-		    })
-		     .then(function(data) {
-		     	pushItem(data);
-		    	$scope.task.busy = true;
-			    /* Refreshes the list*/
-      			var message = 'A new task has been created.';
-			    Preloader.notify(message)
-			    	.then(function(){
-				     	$scope.task.busy = false;
-			    	})
-		    }, function() {
-		    	return;
-		    });
-		}
-
-		/**
-		 * Object for fab
-		 *
-		*/
-		$scope.fab = {};
-
-		$scope.fab.icon = 'mdi-plus';
-		$scope.fab.label = 'Task';
-		$scope.fab.action = createTask;
-
 		/* Sets up the page for what tab it is*/
 		var setInit = function(nav){
 			$scope.subheader.current = nav;
@@ -99,8 +68,7 @@ sharedModule
 			{
 				'label':'Pending',
 				'request': {
-					'withTrashed': true,
-					'with': [
+					'withTask': [
 						{
 							'relation' : 'category',
 							'withTrashed': true,
@@ -108,10 +76,6 @@ sharedModule
 						{
 							'relation' : 'client',
 							'withTrashed': true,
-						},
-						{
-							'relation': 'designer_assigned',
-							'withTrashed': false,
 						},
 					],
 					'where': [
@@ -126,39 +90,11 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
-				'menu': [
-					{
-						'label': 'Assign multiple',
-						'icon': 'mdi-tag-multiple',
-						action: function(){
-							$scope.selectMultiple = true;
-							$scope.fab.label = 'Assign';
-							$scope.fab.icon = this.icon;
-							$scope.fab.action = function(){
-								Preloader.set($scope.task.items);
-								$mdDialog.show({
-							      	controller: 'assignTasksDialogController',
-							      	templateUrl: '/app/components/admin/templates/dialogs/assign-tasks-dialog.template.html',
-							      	parent: angular.element(document.body),
-							      	fullscreen: true,
-							    })
-							    .then(function(){
-							    	$scope.selectMultiple = false;
-							    	$scope.fab.label = 'Task';
-									$scope.fab.icon = 'mdi-plus';
-									$scope.fab.action = createTask;
-
-									$scope.subheader.refresh();
-							    })
-							}
-						},
-					},
-				],
 			},
 			{
 				'label':'In Progress',
 				'request': {
-					'with': [
+					'withTask': [
 						{
 							'relation' : 'category',
 							'withTrashed': true,
@@ -188,7 +124,7 @@ sharedModule
 			{
 				'label':'For QC',
 				'request': {
-					'with': [
+					'withTask': [
 						{
 							'relation' : 'category',
 							'withTrashed': true,
@@ -218,7 +154,7 @@ sharedModule
 			{
 				'label':'Rework',
 				'request': {
-					'with': [
+					'withTask': [
 						{
 							'relation' : 'category',
 							'withTrashed': true,
@@ -252,7 +188,7 @@ sharedModule
 			{
 				'label':'Complete',
 				'request': {
-					'with': [
+					'withTask': [
 						{
 							'relation' : 'category',
 							'withTrashed': true,
@@ -313,17 +249,6 @@ sharedModule
 			},
 		];
 
-		$scope.subheader.cancelSelectMultiple = function(){
-			$scope.selectMultiple = false;
-			$scope.fab.label = 'Task';
-			$scope.fab.icon = 'mdi-plus';
-			$scope.fab.action = createTask;
-
-			angular.forEach($scope.task.items, function(item){
-				item.include = false;
-			});
-		}
-
 		$scope.subheader.refresh = function(){
 			$scope.isLoading = true;
   			$scope.task.show = false;
@@ -373,7 +298,6 @@ sharedModule
 			item.updated_at = new Date(item.updated_at);
 			item.delivery_date = new Date(item.delivery_date);
 			item.live_date = new Date(item.live_date);
-			item.deleted_at = item.deleted_at ? new Date(item.deleted_at) : null;
 			item.category = item.category.name;
 			item.client = item.client.name;
 
@@ -381,6 +305,7 @@ sharedModule
 			filter.display = item.file_name;
 
 			$scope.toolbar.items.push(filter);
+			$scope.task.items.push(item);
 		}
 
 		$scope.init = function(request, searched){
@@ -415,7 +340,7 @@ sharedModule
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.task.page = 2;
 
-			Task.paginate(request)
+			DesignerAssigned.paginate(request)
 				.success(function(data){
 					if(!data)
 					{
@@ -424,11 +349,7 @@ sharedModule
 					}
 					
 					$scope.task.details = data;
-					$scope.task.items = data.data;
 					$scope.task.show = true;
-
-					/* Fab */
-					$scope.fab.show = true;
 
 					// Hides inactive records
 					$scope.showInactive = false;
@@ -436,7 +357,10 @@ sharedModule
 					if(data.data.length){
 						// iterate over each record and set the updated_at date and first letter
 						angular.forEach(data.data, function(item){
-							pushItem(item);
+							if(item.task)
+							{
+								pushItem(item.task);
+							}
 						});
 
 					}
@@ -455,15 +379,14 @@ sharedModule
 						$scope.task.busy = true;
 						$scope.isLoading = true;
 						// Calls the next page of pagination.
-						Task.paginate(request, $scope.task.page)
+						DesignerAssigned.paginate(request, $scope.task.page)
 							.success(function(data){
 								// increment the page to set up next page for next AJAX Call
 								$scope.task.page++;
 
 								// iterate over each data then splice it to the data array
 								angular.forEach(data.data, function(item, key){
-									pushItem(item);
-									$scope.task.items.push(item);
+									pushItem(item.task);
 								});
 
 								// Enables again the pagination call for next call.

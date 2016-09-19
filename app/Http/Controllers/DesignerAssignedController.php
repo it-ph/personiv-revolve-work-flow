@@ -14,6 +14,53 @@ use App\Events\PusherNotifyDesignerForNewTask;
 
 class DesignerAssignedController extends Controller
 {
+    public function paginate(Request $request)
+    {
+        if(!count($request->all()))
+        {
+            return;
+        }
+
+        $tasks = DesignerAssigned::query();
+
+        $this->withTask = $request->input('withTask');
+        $this->where = $request->input('where');
+        $this->searchText = $request->input('searchText');
+
+        $tasks->with(['task' => function($query){
+            if(count($this->withTask))
+            {
+                for ($i=0; $i < count($this->withTask); $i++) {
+                    // if relation does not include deleted records
+                    if(!$this->withTask[$i]['withTrashed'])
+                    {
+                        $query->with($this->withTask[$i]['relation']);
+                        continue;
+                    }
+
+                    // if relation includes deleted records
+                    $query->with([$this->withTask[$i]['relation'] => function($query){ $query->withTrashed(); }]); 
+                }
+
+            }
+
+            // iterates where clauses declared by user
+            if(count($this->where))
+            {
+                for ($i=0; $i < count($this->where); $i++) { 
+                    $query->where($this->where[$i]['label'], $this->where[$i]['condition'], $this->where[$i]['value']);
+                }
+            }
+
+            if($this->searchText)
+            {
+                $query->where('file_name', 'like', '%'. $this->searchText .'%');
+            }
+        }]);
+
+        return $tasks->where('designer_id', $request->user()->id)->orderBy('created_at')->paginate($request->paginate);
+
+    }
     /**
      * Display a listing of the resource.
      *

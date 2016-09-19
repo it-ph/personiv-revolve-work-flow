@@ -16,7 +16,7 @@ adminModule
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
 					'left-sidenav@main': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'content@main':{
 						templateUrl: '/app/components/admin/templates/content/content.template.html',
@@ -34,7 +34,7 @@ adminModule
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
 					'left-sidenav@main.settings': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'subheader@main.settings': {
 						templateUrl: '/app/components/admin/templates/subheaders/settings-subheader.template.html',
@@ -55,13 +55,13 @@ adminModule
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
 					'left-sidenav@main.tracker': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'subheader@main.tracker': {
-						templateUrl: '/app/components/admin/templates/subheaders/tracker-subheader.template.html',
+						templateUrl: '/app/shared/templates/subheaders/tracker-subheader.template.html',
 					},
 					'content@main.tracker':{
-						templateUrl: '/app/components/admin/templates/content/tracker-content.template.html',
+						templateUrl: '/app/shared/templates/content/tracker-content.template.html',
 					},
 				}
 			})
@@ -76,7 +76,7 @@ adminModule
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
 					'left-sidenav@main.upload': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'content@main.upload':{
 						templateUrl: '/app/components/admin/templates/content/upload-content.template.html',
@@ -94,13 +94,31 @@ adminModule
 						templateUrl: '/app/shared/templates/toolbar.template.html',
 					},
 					'left-sidenav@main.sheets': {
-						templateUrl: '/app/components/admin/templates/sidenavs/main-left-sidenav.template.html',
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
 					'subheader@main.sheets': {
 						templateUrl: '/app/components/admin/templates/subheaders/sheets-subheader.template.html',
 					},
 					'content@main.sheets':{
 						templateUrl: '/app/components/admin/templates/content/sheets-content.template.html',
+					},
+				}
+			})
+			.state('main.task', {
+				url: 'task/{taskID}',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'taskContentContainerController',
+					},
+					'toolbar@main.task': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.task': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.task':{
+						templateUrl: '/app/shared/templates/content/task-content.template.html',
 					},
 				}
 			})

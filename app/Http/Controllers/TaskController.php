@@ -10,16 +10,49 @@ use App\Category;
 use App\Client;
 use App\Spreadsheet;
 use App\User;
+use App\DesignerAssigned;
 use Carbon\Carbon;
 use Auth;
 use App\Notifications\TaskCreated;
 use App\Notifications\SpreadsheetCreated;
+use App\Notifications\DesignerTaskStart;
 use App\Events\PusherTaskCreated;
 use App\Events\PusherSpreadsheetCreated;
+use App\Events\PusherDesignerTaskStart;
 use App\Events\Test;
 
 class TaskController extends Controller
 {
+    public function started(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'designer_assigned.id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'in_progress';
+
+        $task->save();
+
+        $designer_assigned = DesignerAssigned::where('id', $request->designer_assigned)->first();
+
+        $designer_assigned->time_start = Carbon::now();
+
+        $designer_assigned->save();
+
+        $designer_assigned->task = Task::where('id', $designer_assigned->task_id)->first();
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - designer assigned, sender
+            $user->notify(new DesignerTaskStart($designer_assigned, Auth::user()));
+            // broadcast the notifications - designer assigned, sender, recipient
+            event(new PusherDesignerTaskStart($designer_assigned->task, Auth::user(), $user));
+        }
+    }
     /**
      * Store multiple tasks.
      *
@@ -135,6 +168,88 @@ class TaskController extends Controller
         $task = $request->id ? Task::whereNotIn('id', [$request->id])->where('file_name', $request->file_name)->first() : Task::where('file_name', $request->file_name)->first();
 
         return response()->json($task ? true : false);
+    }
+
+    /**
+     * Enlist the request of user.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function enlist(Request $request)
+    {
+        if(!count($request->all()))
+        {
+            return;
+        }
+
+        $tasks = Task::query();
+
+         // true if the user wants to include deleted records 
+        if($request->withTrashed)
+        {
+            $tasks->withTrashed();
+        }
+
+        // iterates with clauses declared by user
+        if(count($request->input('with')))
+        {
+            for ($i=0; $i < count($request->input('with')); $i++) {
+                // Manually created this because of looping issue
+                if($request->input('with')[$i]['relation'] == 'designer_assigned')
+                {
+                    $tasks->with([$request->input('with')[$i]['relation'] => function($query){ 
+                        $query->with(['designer' => function($query){
+                            $query->withTrashed();
+                        }]);
+                    }]);
+
+                    continue;
+                }
+                else if($request->input('with')[$i]['relation'] == 'quality_control')
+                {
+                     $tasks->with([$request->input('with')[$i]['relation'] => function($query){ 
+                        $query->with(['quality_control' => function($query){
+                            $query->withTrashed();
+                        }]);
+                    }]);
+
+                    continue;
+                }
+
+                // if relation does not include deleted records
+                if(!$request->input('with')[$i]['withTrashed'])
+                {
+                    $tasks->with($request->input('with')[$i]['relation']);
+                    
+                }
+                else{
+                    // if relation includes deleted records
+                    $tasks->with([$request->input('with')[$i]['relation'] => function($query){ $query->withTrashed(); }]); 
+                }
+
+            }
+        }
+
+        // iterates where clauses declared by user
+        if(count($request->input('where')))
+        {
+            for ($i=0; $i < count($request->input('where')); $i++) { 
+                $tasks->where($request->input('where')[$i]['label'], $request->input('where')[$i]['condition'], $request->input('where')[$i]['value']);
+            }
+        }
+
+        if($request->searchText)
+        {
+            $tasks->where('file_name', 'like', '%'. $request->searchText .'%');
+        }
+
+        if($request->paginate)
+        {
+            return $tasks->orderBy('created_at')->paginate($request->paginate);
+        }
+
+        return $tasks->first();
     }
 
     /**

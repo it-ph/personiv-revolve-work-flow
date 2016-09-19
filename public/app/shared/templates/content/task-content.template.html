@@ -1,0 +1,74 @@
+<div layout="row" layout-align="center center" flex layout-padding> 
+    <md-card flex flex-gt-lg="80">
+        <md-card-header>
+            <md-card-avatar class="circle primary-bg" layout="row" layout-align="center center">
+                <span class="md-headline white-text">{{ task.file_name.charAt(0).toUpperCase() }}</span>
+            </md-card-avatar>
+            <md-card-header-text>
+                <span class="md-title">{{ task.file_name }}</span>
+                <span class="md-subhead">{{ task.client.name }} - {{ task.category.name }}</span>
+            </md-card-header-text>
+        </md-card-header>
+        <md-card-content>
+            <!-- Desinger -->
+            <table class="table">
+                <tr>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Designer</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Start</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">End</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Minutes spent</th>
+                </tr>
+                <tr>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.designer_assigned.designer.name }} <span ng-if="!task.designer_assigned">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.designer_assigned.time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!task.designer_assigned.time_start">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.designer_assigned.time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!task.designer_assigned.time_end">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.designer_assigned.minutes_spent}} <span ng-if="!task.designer_assigned.minutes_spent">N/A</span></td>
+                </tr>
+            </table>
+            <!-- Quality Control -->
+            <table class="table">
+                <tr>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">QC</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Start</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">End</th>
+                    <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Minutes spent</th>
+                </tr>
+                <tr>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.quality_control_assigned.quality_control.name }} <span ng-if="!task.quality_control_assigned">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.quality_control_assigned.time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!task.quality_control_assigned.time_start">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.quality_control_assigned.time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!task.quality_control_assigned.time_end">N/A</span></td>
+                    <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ task.quality_control_assigned.minutes_spent}} <span ng-if="!task.quality_control_assigned.minutes_spent">N/A</span></td>
+                </tr>
+            </table>
+        </md-card-content>
+        <md-divider></md-divider>
+        <md-card-actions layout="row" layout-align="start center">
+            <div ng-if="task.status == 'pending' && user.role == 'designer'">
+                <md-button aria-label="Start" ng-click="start()">
+                    Start
+                </md-button>
+                <md-button aria-label="Decline" ng-click="decline()">
+                    Decline
+                </md-button>
+            </div>
+            <div ng-if="task.status == 'pending' && user.role != 'designer'">
+                <md-button aria-label="Assign" ng-click="assign()" ng-if="!task.designer_assigned">
+                    Assign
+                </md-button>
+                <md-button aria-label="Reassign" ng-click="reassign()">
+                    Reassign
+                </md-button>
+            </div>
+        </md-card-actions>
+        <!-- <md-divider></md-divider>
+        <form name="form.commentSection" novalidate flex>
+            <div layout="column" flex>            
+                <md-input-container md-no-float class="md-block">
+                    <label>Write a comment..</label>
+                    <md-icon class="mdi mdi-account grey"></md-icon>
+                    <textarea name="Comment" ng-model="comment"></textarea>
+                </md-input-container>
+            </div>
+        </form> -->
+    </md-card>
+</div>

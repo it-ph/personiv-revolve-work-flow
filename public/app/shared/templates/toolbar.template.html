@@ -11,7 +11,7 @@
 		<md-icon class="mdi mdi-arrow-left" aria-label="Back"></md-icon>
 	</md-button>
 	<span class="md-headline white-text" ng-if="!searchBar"> <span hide-md hide-sm hide-xs>{{ toolbar.parentState }}</span>
-		<md-icon class="mdi mdi-24px mdi-chevron-right grey" aria-label="chevron right" ng-if="toolbar.parentState && toolbar.childState" hide-md hide-sm hide-xs></md-icon>
+		<md-icon class="mdi mdi-24px mdi-chevron-right" aria-label="chevron right" ng-if="toolbar.parentState && toolbar.childState" hide-md hide-sm hide-xs></md-icon>
 		<span ng-if="toolbar.childState">{{ toolbar.childState }}</span>
 	</span>
 	<div flex>	

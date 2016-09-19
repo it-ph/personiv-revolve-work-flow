@@ -248,6 +248,20 @@ md-content.dirty-white {
   .drop-zone img {
     width: 150px; }
 
+.circle, .avatar-comments-photo {
+  border-radius: 50%; }
+
+.shadow-bg {
+  background: rgba(0, 0, 0, 0.5); }
+
+.card-image-bg {
+  background: url("/img/bg.png");
+  background-size: cover; }
+
+.avatar-comments-photo {
+  height: 40px;
+  width: 40px; }
+
 /* transition duration */
 .transition, .fade-transition, .main-view {
   -webkit-transition: all 0.3s cubic-bezier(0.55, 0, 0.55, 0.2);

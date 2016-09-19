@@ -1,4 +1,4 @@
-adminModule
+designerModule
 	.controller('mainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){
 		$scope.toggleSidenav = function(menuID){
 			$mdSidenav(menuID).toggle();
@@ -13,11 +13,6 @@ adminModule
 				'label': 'Dashboard',
 			},
 			{
-				'state': 'main.sheets',
-				'icon': 'mdi-file-excel',
-				'label': 'Sheets',
-			},
-			{
 				'state': 'main.tracker',
 				'icon': 'mdi-view-list',
 				'label': 'Tracker',
@@ -26,11 +21,6 @@ adminModule
 				'state': 'main.notifications',
 				'icon': 'mdi-bell',
 				'label': 'Notifications',
-			},
-			{
-				'state': 'main.settings',
-				'icon': 'mdi-settings',
-				'label': 'Settings',
 			},
 		]
 		
@@ -74,46 +64,8 @@ adminModule
 				notif.sender = notif.data.sender.name;
 				notif.created_at = new Date(notif.created_at);
 
-				if(notif.type == 'App\\Notifications\\TaskCreated'){
-					notif.message = 'created a new task.';
-					notif.action = function(id){
-						// mark as read
-						Notification.markAsRead(id)
-							.success(function(data){
-								formatNotification(data);
-								$scope.user = data;
-								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
-							})
-					}
-				}
-				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
-					notif.message = 'created a new sheet.';
-					notif.action = function(id){
-						// mark as read
-						Notification.markAsRead(id)
-							.success(function(data){
-								formatNotification(data);
-								$scope.user = data;
-								$state.go('main.sheet', {'sheetID': notif.data.attachment.id});
-							})
-					}
-				}
-
-				else if(notif.type == 'App\\Notifications\\TaskAssignedToDesigner'){
-					notif.message = 'assigned a task for ' + notif.data.attachment.designer.name + '.';
-					notif.action = function(id){
-						// mark as read
-						Notification.markAsRead(id)
-							.success(function(data){
-								formatNotification(data);
-								$scope.user = data;
-								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
-							})
-					}
-				}
-
-				else if(notif.type == 'App\\Notifications\\DesignerTaskStart'){
-					notif.message = 'started to work on ' + notif.data.attachment.task.file_name + '.';
+				if(notif.type == 'App\\Notifications\\NotifyDesignerForNewTask'){
+					notif.message = 'assigned a task for you.';
 					notif.action = function(id){
 						// mark as read
 						Notification.markAsRead(id)
@@ -157,40 +109,13 @@ adminModule
 
 				var channel = {};
 
-				channel.admin = pusher.subscribe('admin');
+				channel.designer = pusher.subscribe('designer');
 				channel.user = pusher.subscribe('user.' + $scope.user.id);					
 				
 			    channel.user.bindings = [
-				    channel.user.bind('App\\Events\\PusherTaskCreated', function(data) {
+				    channel.user.bind('App\\Events\\PusherNotifyDesignerForNewTask', function(data) {
 				    	fetchUnreadNotifications();
-				    	var message = data.sender.name + ' created a new task.';
-				    	Preloader.newNotification(message);
-
-				    	// if state is trackers 
-
-				    }),
-
-				    channel.user.bind('App\\Events\\PusherSpreadsheetCreated', function(data) {
-				    	fetchUnreadNotifications();
-				    	var message = data.sender.name + ' created a new sheet.';
-				    	Preloader.newNotification(message);
-
-				    	// if state is sheets 
-
-				    }),
-
-				    channel.user.bind('App\\Events\\PusherTaskAssignedToDesigner', function(data) {
-				    	fetchUnreadNotifications();
-				    	var message = data.sender.name + ' assigned a task for ' + data.data.name + '.';
-				    	Preloader.newNotification(message);
-
-				    	// if state is sheets 
-
-				    }),
-
-				    channel.user.bind('App\\Events\\PusherDesignerTaskStart', function(data) {
-				    	fetchUnreadNotifications();
-				    	var message = data.sender.name + ' started to work on ' + data.data.file_name + '.';
+				    	var message = data.sender.name + ' assigned a task to you.';
 				    	Preloader.newNotification(message);
 
 				    	// if state is sheets 

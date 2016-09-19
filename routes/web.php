@@ -65,11 +65,13 @@ Route::get('category-paginate', 'CategoryController@paginate');
 Route::get('client-paginate', 'ClientController@paginate');
 Route::post('task-paginate', 'TaskController@paginate');
 Route::post('spreadsheet-paginate', 'SpreadsheetController@paginate');
+Route::post('designer-assigned-paginate', 'DesignerAssignedController@paginate');
 
 /* Enlist */
 Route::post('category-enlist', 'CategoryController@enlist');
 Route::post('client-enlist', 'ClientController@enlist');
 Route::post('user-enlist', 'UserController@enlist');
+Route::post('task-enlist', 'TaskController@enlist');
 
 /* Duplicate */
 Route::post('category-check-duplicate', 'CategoryController@checkDuplicate');
@@ -86,3 +88,4 @@ Route::get('spreadsheet-read/{spreadsheetID}', 'SpreadsheetController@read');
 /* Task */
 Route::post('task-store-multiple', 'TaskController@storeMultiple');
 Route::post('task-check-duplicate-multiple', 'TaskController@checkDuplicateMultiple');
+Route::post('task-started', 'TaskController@started');
