@@ -21,39 +21,39 @@ sharedModule
 
 			/* checks authenticated user */
 			check: function(query){
-				return $http.post(urlBase + '-check', query);
+				return $http.post(urlBase + '/check', query);
 			},
 			/* logout authenticated user */
 			logout: function(){
-				return $http.post(urlBase + '-logout');
+				return $http.post(urlBase + '/logout');
 			},
 			/* checks if email is in use */
 			checkEmail: function(data){
-				return $http.post(urlBase + '-check-email', data);
+				return $http.post(urlBase + '/check-email', data);
 			},
 			/* checks old password is the same with new password */
 			checkPassword: function(data){
-				return $http.post(urlBase + '-check-password', data);
+				return $http.post(urlBase + '/check-password', data);
 			},
 			/* changes password of authenticated user */
 			changePassword: function(data){
-				return $http.post(urlBase + '-change-password', data);
+				return $http.post(urlBase + '/change-password', data);
 			},
 			/* resets passwords of specific user */
 			resetPassword: function(data){
-				return $http.post(urlBase + '-reset-password', data);
+				return $http.post(urlBase + '/reset-password', data);
 			},
 			paginate: function(page){
-				return $http.get(urlBase + '-paginate?page=' + page);
+				return $http.get(urlBase + '/paginate?page=' + page);
 			},
 			disable: function(data){
-				return $http.post(urlBase + '-disable', data);
+				return $http.post(urlBase + '/disable', data);
 			},
 			markAsRead: function(id){
-				return $http.get(urlBase + '-mark-as-read/' + id);
+				return $http.get(urlBase + '/mark-as-read/' + id);
 			},
 			enlist: function(data){
-				return $http.post(urlBase + '-enlist', data);
+				return $http.post(urlBase + '/enlist', data);
 			},
 		}
 	}]);

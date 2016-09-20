@@ -11,7 +11,7 @@ use Auth;
 
 class NotificationController extends Controller
 {
-    public function markAllAsRead()
+    public function markAllAsRead(Request $request)
     {
         $notifications = Notification::where('notifiable_type', 'App\\User')->where('notifiable_id', Auth::user()->id)->whereNull('read_at')->get();
 
@@ -21,10 +21,14 @@ class NotificationController extends Controller
             $notification->save();
         }
 
-        return Auth::user();
+        $user = Auth::user();
+
+        $user->unread_notifications = $user->unreadNotifications;
+
+        return $user;
     }
 
-    public function markAsRead($id)
+    public function markAsRead(Request $request, $id)
     {
         $notification = Notification::where('id', $id)->first();
 

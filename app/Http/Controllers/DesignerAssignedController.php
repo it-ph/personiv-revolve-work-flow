@@ -5,15 +5,142 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use App\DesignerAssigned;
 use App\User;
+use App\Task;
+use Auth;
 use Carbon\Carbon;
 use App\Http\Requests;
+
 use App\Notifications\TaskAssignedToDesigner;
 use App\Notifications\NotifyDesignerForNewTask;
+use App\Notifications\DesignerTaskStart;
+use App\Notifications\DesignerTaskDecline;
+use App\Notifications\ForQC;
+
 use App\Events\PusherTaskAssignedToDesigner;
 use App\Events\PusherNotifyDesignerForNewTask;
+use App\Events\PusherDesignerTaskStart;
+use App\Events\PusherDesignerTaskDecline;
+use App\Events\PusherForQC;
 
 class DesignerAssignedController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:quality_control,admin')->except('paginate', 'start', 'decline', 'forQC');
+
+        $this->middleware('role:designer,designer')->only('start', 'decline', 'forQC');
+    }
+    
+    /**
+     * Change status of task to 'forQC'.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function forQC(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'designer_assigned.id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'for_qc';
+
+        $task->save();
+
+        $designer_assigned = DesignerAssigned::where('id', $request->input('designer_assigned.id'))->first();
+
+        $designer_assigned->time_end = Carbon::now();
+
+        $designer_assigned->minutes_spent = Carbon::parse($designer_assigned->time_start)->diffInMinutes(Carbon::parse($designer_assigned->time_end));
+
+        $designer_assigned->save();
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - task, sender
+            $user->notify(new ForQC($task, Auth::user()));
+            // broadcast the notifications - task, sender, recipient
+            event(new PusherForQC($task, Auth::user(), $user));
+        }
+    }
+
+    /**
+     * Task declined by designer.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function decline(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'designer_assigned.id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $designer_assigned = DesignerAssigned::where('id', $request->input('designer_assigned.id'))->first();
+
+        $designer_assigned->task = $task;
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - designer assigned, sender
+            $user->notify(new DesignerTaskDecline($designer_assigned, Auth::user()));
+            // broadcast the notifications - designer assigned, sender, recipient
+            event(new PusherDesignerTaskDecline($designer_assigned->task, Auth::user(), $user));
+        }
+
+        $designer_assigned->delete();
+    }
+
+    /**
+     * Task start by a designer.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function start(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'designer_assigned.id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'in_progress';
+
+        $task->save();
+
+        $designer_assigned = DesignerAssigned::where('id', $request->input('designer_assigned.id'))->first();
+
+        $designer_assigned->time_start = Carbon::now();
+
+        $designer_assigned->save();
+
+        $designer_assigned->task = $task;
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - designer assigned, sender
+            $user->notify(new DesignerTaskStart($designer_assigned, Auth::user()));
+            // broadcast the notifications - designer assigned, sender, recipient
+            event(new PusherDesignerTaskStart($designer_assigned->task, Auth::user(), $user));
+        }
+    }
+
+    /**
+     * Display pending tasks of the designer.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function paginate(Request $request)
     {
         if(!count($request->all()))
@@ -154,7 +281,42 @@ class DesignerAssignedController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'designer_id' => 'required|numeric',
+        ]);
+
+        $previous = DesignerAssigned::with('designer')->where('task_id', $id)->first();
+
+        if($previous->time_start)
+        {
+            abort(403, 'Task has already started.');
+        }
+
+        $designer_assigned = new DesignerAssigned;
+
+        $designer_assigned->task_id = $id;
+
+        $designer_assigned->designer_id = $request->designer_id;
+
+        $designer_assigned->save();
+
+        $designer_assigned->designer = User::where('id', $request->designer_id)->first();
+
+        // Notify admin and quality control that a task was been assigned
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $user) {
+            $user->notify(new TaskAssignedToDesigner($designer_assigned, $request->user()));
+            event(new PusherTaskAssignedToDesigner($designer_assigned->designer, $request->user(), $user));
+        }
+
+        $user = User::where('id', $request->designer_id)->first();
+
+        // Notify the designer for a new task
+        $user->notify(new NotifyDesignerForNewTask($designer_assigned, $request->user()));
+        event(new PusherNotifyDesignerForNewTask($designer_assigned->designer, $request->user(), $user));
+
+        $previous->delete();
     }
 
     /**

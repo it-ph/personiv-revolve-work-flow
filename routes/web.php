@@ -15,27 +15,13 @@
 //     return view('welcome');
 // });
 
-Route::get('/', function () {
-	if (Auth::check()) {
-		return redirect('/home');
-    }
-    return view('auth.login');
-});
+Route::get('/', 'HomeController@home');
 
 Auth::routes();
 
 /* Determines what type of user then returns the appropriate views*/
 Route::get('/home', 'HomeController@index');
 
-
-/* Blocks register routes*/
-Route::get('/register', function(){
-	return redirect('/');
-});
-
-Route::post('/register', function(){
-	return redirect('/');
-});
 
 /* Route Resource */
 Route::resource('category', 'CategoryController');
@@ -44,48 +30,64 @@ Route::resource('comment', 'CommentController');
 Route::resource('designer-assigned', 'DesignerAssignedController');
 Route::resource('notification', 'NotificationController');
 Route::resource('quality-control-assigned', 'QualityControlAssignedController');
-Route::resource('quality-control-task', 'QualityControlTaskController');
 Route::resource('rework', 'ReworkController');
 Route::resource('spreadsheet', 'SpreadsheetController');
 Route::resource('task', 'TaskController');
 Route::resource('user', 'UserController');
 
 /* User Routes */
-Route::post('user-check', 'UserController@check');
-Route::post('user-reset-password', 'UserController@resetPassword');
-Route::post('user-logout', 'UserController@logout');
-Route::post('user-check-email', 'UserController@checkEmail');
-Route::post('user-check-password', 'UserController@checkPassword');
-Route::post('user-change-password', 'UserController@changePassword');
+Route::group(['prefix' => 'user'], function(){
+	Route::post('check', 'UserController@check');
+	Route::post('reset-password', 'UserController@resetPassword');
+	Route::post('logout', 'UserController@logout');
+	Route::post('check-email', 'UserController@checkEmail');
+	Route::post('check-password', 'UserController@checkPassword');
+	Route::post('change-password', 'UserController@changePassword');
+	Route::post('designers/paginate', 'UserController@designersPaginate');
+	Route::post('quality_control/paginate', 'UserController@qualityControlPaginate');
+	Route::post('enlist', 'UserController@enlist');
+});
 
-/* Paginate */
-Route::get('user-designers-paginate', 'UserController@designersPaginate');
-Route::get('user-quality_control-paginate', 'UserController@qualityControlPaginate');
-Route::get('category-paginate', 'CategoryController@paginate');
-Route::get('client-paginate', 'ClientController@paginate');
-Route::post('task-paginate', 'TaskController@paginate');
-Route::post('spreadsheet-paginate', 'SpreadsheetController@paginate');
-Route::post('designer-assigned-paginate', 'DesignerAssignedController@paginate');
+/* Category Routes */
+Route::group(['prefix' => 'category'], function(){
+	Route::post('paginate', 'CategoryController@paginate');
+	Route::post('enlist', 'CategoryController@enlist');
+	Route::post('check-duplicate', 'CategoryController@checkDuplicate');
+});
 
-/* Enlist */
-Route::post('category-enlist', 'CategoryController@enlist');
-Route::post('client-enlist', 'ClientController@enlist');
-Route::post('user-enlist', 'UserController@enlist');
-Route::post('task-enlist', 'TaskController@enlist');
+/* Client Routes */
+Route::group(['prefix' => 'client'], function(){
+	Route::post('paginate', 'ClientController@paginate');
+	Route::post('enlist', 'ClientController@enlist');
+	Route::post('check-duplicate', 'ClientController@checkDuplicate');
+});
 
-/* Duplicate */
-Route::post('category-check-duplicate', 'CategoryController@checkDuplicate');
-Route::post('client-check-duplicate', 'ClientController@checkDuplicate');
-Route::post('task-check-duplicate', 'TaskController@checkDuplicate');
+/* Task Routes */
+Route::group(['prefix' => 'task'], function(){
+	Route::post('paginate', 'TaskController@paginate');
+	Route::post('enlist', 'TaskController@enlist');
+	Route::post('check-duplicate', 'TaskController@checkDuplicate');
+	Route::post('store-multiple', 'TaskController@storeMultiple');
+	Route::post('check-duplicate-multiple', 'TaskController@checkDuplicateMultiple');
+});
 
-/* Notification */
-Route::get('notification-mark-as-read/{notificationID}', 'NotificationController@markAsRead');
-Route::get('notification-mark-all-as-read', 'NotificationController@markAllAsRead');
+/* Spreadsheet Routes */
+Route::group(['prefix' => 'spreadsheet'], function(){
+	Route::post('paginate', 'SpreadsheetController@paginate');
+	Route::get('read/{spreadsheetID}', 'SpreadsheetController@read');
+});
 
-/* Spreadsheet */
-Route::get('spreadsheet-read/{spreadsheetID}', 'SpreadsheetController@read');
+/* DesignerAssigned Routes */
+Route::group(['prefix' => 'designer-assigned'], function(){
+	Route::post('paginate', 'DesignerAssignedController@paginate');
+	Route::post('start', 'DesignerAssignedController@start');
+	Route::post('decline', 'DesignerAssignedController@decline');
+	Route::post('for-qc', 'DesignerAssignedController@forQC');
+});
 
-/* Task */
-Route::post('task-store-multiple', 'TaskController@storeMultiple');
-Route::post('task-check-duplicate-multiple', 'TaskController@checkDuplicateMultiple');
-Route::post('task-started', 'TaskController@started');
+/* Notification Routes */
+Route::group(['prefix' => 'notification'], function(){
+	Route::post('mark-as-read/{notificationID}', 'NotificationController@markAsRead');
+	Route::post('mark-all-as-read', 'NotificationController@markAllAsRead');
+});
+

@@ -19,10 +19,10 @@ sharedModule
 				return $http.delete(urlBase + '/' + id);
 			},
 			read: function(id){
-				return $http.get(urlBase + '-read/' + id);
+				return $http.get(urlBase + '/read/' + id);
 			},
 			paginate: function(request, page){
-				return $http.post(urlBase + '-paginate?page=' + page, request);
+				return $http.post(urlBase + '/paginate?page=' + page, request);
 			},
 		}
 	}]);

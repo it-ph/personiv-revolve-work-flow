@@ -248,22 +248,15 @@ sharedModule
 		$scope.init();
 	}]);
 sharedModule	
-	.controller('taskContentContainerController', ['$scope', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', function($scope, $state, $stateParams, Preloader, Task, DesignerAssigned){
+	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'QualityControlAssigned', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, QualityControlAssigned){
 		var taskID = $stateParams.taskID;
 
 		$scope.toolbar = {};
 
-		$scope.toolbar.parentState = 'Task';
-		$scope.toolbar.back = function(){
-			$state.go('main.tracker');
-		};
-
-		$scope.toolbar.showBack = true;
-
 		$scope.toolbar.hideSearchIcon = true;
 
-		// check the user if he has pending works
-
+		/* Designer actions */
+		// check the user if he has pending works before executing this
 		$scope.start = function()
 		{
 			var dialog = {
@@ -275,7 +268,7 @@ sharedModule
 
 			Preloader.confirm(dialog)
 				.then(function(){
-					Task.started($scope.task)
+					DesignerAssigned.start($scope.task)
 						.success(function(data){
 							$scope.init();
 						})
@@ -287,8 +280,115 @@ sharedModule
 				})
 		}
 
+		$scope.decline = function()
+		{
+			var query = {
+				'title': 'Decline task',
+				'message': 'This task will be removed from the list.',
+				'ok': 'Decline',
+				'cancel': 'Cancel',
+			}
+
+			Preloader.confirm(query)
+				.then(function(){
+					Preloader.preload();
+					DesignerAssigned.decline($scope.task)
+						.success(function(){
+							Preloader.stop();
+							$state.go('main.tracker');
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				})
+		}
+		
+		$scope.forQC = function()
+		{
+			var dialog = {
+				'title': 'For QC',
+				'message': 'Submit task for quality control?',
+				'ok': 'Continue',
+				'cancel': 'Cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					DesignerAssigned.forQC($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		/* Admin QC Actions */
+		$scope.assign = function()
+		{
+			$scope.task.include = true;
+			Preloader.set([$scope.task]);
+			$mdDialog.show({
+		      	controller: 'assignTasksDialogController',
+		      	templateUrl: '/app/shared/templates/dialogs/assign-tasks-dialog.template.html',
+		      	parent: angular.element(document.body),
+		      	fullscreen: true,
+		    })
+		    .then(function(){
+		    	$scope.init();
+		    }, function(){
+		    	return;
+		    })
+		}
+		
+		$scope.reassign = function()
+		{
+			$scope.task.include = true;
+			Preloader.set($scope.task);
+			$mdDialog.show({
+		      	controller: 'reassignTasksDialogController',
+		      	templateUrl: '/app/shared/templates/dialogs/reassign-tasks-dialog.template.html',
+		      	parent: angular.element(document.body),
+		      	fullscreen: true,
+		    })
+		    .then(function(){
+		    	$scope.init();
+		    }, function(){
+		    	return;
+		    })
+		}
+
+		$scope.delete = function()
+		{
+			var query = {
+				'title': 'Delete task',
+				'message': 'This task will be removed from the list.',
+				'ok': 'Delete',
+				'cancel': 'Cancel',
+			}
+
+			Preloader.confirm(query)
+				.then(function(){
+					Preloader.preload();
+					Task.delete(taskID)
+						.success(function(){
+							Preloader.stop();
+							$state.go('main.tracker');
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				})
+		}
+
 		$scope.init = function(){
 			var query = {
+				'withTrashed': true,
 				'with': [
 					{
 						'relation' : 'category',
@@ -330,18 +430,31 @@ sharedModule
 
 			Task.enlist(query)
 				.success(function(data){
+					$scope.unauthorized = false;
 					if(data.designer_assigned)
 					{
+						if(data.designer_assigned.designer.id != $scope.user.id && $scope.user.role == 'designer')
+						{
+							$scope.unauthorized = true;
+						}
+
 						data.designer_assigned.time_start = data.designer_assigned.time_start ? new Date(data.designer_assigned.time_start) : null;
 						data.designer_assigned.time_end = data.designer_assigned.time_end ? new Date(data.designer_assigned.time_end) : null;
 					}
 					if(data.quality_control)
 					{
+						if(data.designer_assigned.designer.id != $scope.user.id && $scope.user.role == 'designer')
+						{
+							$scope.unauthorized = true;
+						}
 						data.quality_control_assigned.time_start = data.quality_control_assigned.time_start ? new Date(data.quality_control_assigned.time_start) : null;
 						data.quality_control_assigned.time_end = data.quality_control_assigned.time_end ? new Date(data.quality_control_assigned.time_end) : null;
 					}
 
 					$scope.task = data;
+					$scope.task.first_letter = data.file_name.charAt(0).toUpperCase();
+					$scope.task.category = data.category.name;
+					$scope.task.client = data.client.name;
 					$scope.toolbar.childState = data.file_name;
 				})
 		}
@@ -488,7 +601,7 @@ sharedModule
 								Preloader.set($scope.task.items);
 								$mdDialog.show({
 							      	controller: 'assignTasksDialogController',
-							      	templateUrl: '/app/components/admin/templates/dialogs/assign-tasks-dialog.template.html',
+							      	templateUrl: '/app/shared/templates/dialogs/assign-tasks-dialog.template.html',
 							      	parent: angular.element(document.body),
 							      	fullscreen: true,
 							    })
@@ -1092,7 +1205,7 @@ sharedModule
 				return $http.delete(urlBase + '/' + id);
 			},
 			checkDuplicate: function(data){
-				return $http.post(urlBase + '-check-duplicate', data);
+				return $http.post(urlBase + '/check-duplicate', data);
 			},
 		}
 	}]);
@@ -1162,7 +1275,16 @@ sharedModule
 			},
 			paginate: function(data, page)
 			{
-				return $http.post(urlBase + '-paginate?page=' + page, data);
+				return $http.post(urlBase + '/paginate?page=' + page, data);
+			},
+			start: function(data){
+				return $http.post(urlBase + '/start', data);
+			},
+			decline: function(data){
+				return $http.post(urlBase + '/decline', data);
+			},
+			forQC: function(data){
+				return $http.post(urlBase + '/for-qc', data);
 			},
 		}
 	}]);
@@ -1187,10 +1309,10 @@ sharedModule
 				return $http.delete(urlBase + '/' + id);
 			},
 			markAsRead: function(id){
-				return $http.get(urlBase + '-mark-as-read/' + id);
+				return $http.post(urlBase + '/mark-as-read/' + id);
 			},
 			markAllAsRead: function(){
-				return $http.get(urlBase + '-mark-all-as-read');
+				return $http.post(urlBase + '/mark-all-as-read');
 			},
 		}
 	}]);
@@ -1281,10 +1403,10 @@ sharedModule
 				return $http.delete(urlBase + '/' + id);
 			},
 			read: function(id){
-				return $http.get(urlBase + '-read/' + id);
+				return $http.get(urlBase + '/read/' + id);
 			},
 			paginate: function(request, page){
-				return $http.post(urlBase + '-paginate?page=' + page, request);
+				return $http.post(urlBase + '/paginate?page=' + page, request);
 			},
 		}
 	}]);
@@ -1311,23 +1433,20 @@ sharedModule
 			paginate: function(data, page){
 				if(!page)
 				{
-					return $http.post(urlBase + '-paginate', data);
+					return $http.post(urlBase + '/paginate', data);
 				}
 				
-				return $http.post(urlBase + '-paginate?page=' + page, data);
+				return $http.post(urlBase + '/paginate?page=' + page, data);
 			},
 			storeMultiple: function(data){
-				return $http.post(urlBase + '-store-multiple', data);
+				return $http.post(urlBase + '/store-multiple', data);
 			},
 			checkDuplicateMultiple: function(data){
-				return $http.post(urlBase + '-check-duplicate-multiple', data);
+				return $http.post(urlBase + '/check-duplicate-multiple', data);
 			},
 			enlist: function(data){
-				return $http.post(urlBase + '-enlist', data);
+				return $http.post(urlBase + '/enlist', data);
 			},
-			started: function(data){
-				return $http.post(urlBase + '-started', data);
-			}
 		}
 	}]);
 sharedModule
@@ -1353,39 +1472,39 @@ sharedModule
 
 			/* checks authenticated user */
 			check: function(query){
-				return $http.post(urlBase + '-check', query);
+				return $http.post(urlBase + '/check', query);
 			},
 			/* logout authenticated user */
 			logout: function(){
-				return $http.post(urlBase + '-logout');
+				return $http.post(urlBase + '/logout');
 			},
 			/* checks if email is in use */
 			checkEmail: function(data){
-				return $http.post(urlBase + '-check-email', data);
+				return $http.post(urlBase + '/check-email', data);
 			},
 			/* checks old password is the same with new password */
 			checkPassword: function(data){
-				return $http.post(urlBase + '-check-password', data);
+				return $http.post(urlBase + '/check-password', data);
 			},
 			/* changes password of authenticated user */
 			changePassword: function(data){
-				return $http.post(urlBase + '-change-password', data);
+				return $http.post(urlBase + '/change-password', data);
 			},
 			/* resets passwords of specific user */
 			resetPassword: function(data){
-				return $http.post(urlBase + '-reset-password', data);
+				return $http.post(urlBase + '/reset-password', data);
 			},
 			paginate: function(page){
-				return $http.get(urlBase + '-paginate?page=' + page);
+				return $http.get(urlBase + '/paginate?page=' + page);
 			},
 			disable: function(data){
-				return $http.post(urlBase + '-disable', data);
+				return $http.post(urlBase + '/disable', data);
 			},
 			markAsRead: function(id){
-				return $http.get(urlBase + '-mark-as-read/' + id);
+				return $http.get(urlBase + '/mark-as-read/' + id);
 			},
 			enlist: function(data){
-				return $http.post(urlBase + '-enlist', data);
+				return $http.post(urlBase + '/enlist', data);
 			},
 		}
 	}]);
@@ -1441,7 +1560,7 @@ sharedModule
 			/* Starts the preloader */
 			preload: function(){
 				return $mdDialog.show({
-					templateUrl: '/app/shared/templates/loading.html',
+					templateUrl: '/app/shared/views/loading.html',
 				    parent: angular.element(document.body),
 				});
 			},
@@ -1470,7 +1589,7 @@ sharedModule
 				return dataHolder;
 			},
 			checkDuplicate: function(urlBase, data){
-				return $http.post(urlBase + '-check-duplicate', data);
+				return $http.post(urlBase + '/check-duplicate', data);
 			},
 		};
 	}]);
@@ -1478,12 +1597,12 @@ sharedModule
 	.service('Setting', ['$http', '$mdToast', function($http, $mdToast){
 		return {
 			paginate: function(type, page){
-				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user-designers' : 'user-quality_control'));
+				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user/designers' : 'user/quality_control'));
 
-				return $http.get(urlBase + '-paginate?page=' + page);
+				return $http.post(urlBase + '/paginate?page=' + page);
 			},
 			search: function(type, data){
-				var urlBase = type == 'Categories' ? 'category-enlist' : (type == 'Clients' ? 'client-enlist' : 'user-enlist');
+				var urlBase = type == 'Categories' ? 'category/enlist' : (type == 'Clients' ? 'client/enlist' : 'user/enlist');
 
 				return $http.post(urlBase, data);
 			},
@@ -1527,6 +1646,111 @@ sharedModule
 				var urlBase = type == 'Categories' ? 'category' : 'client';
 
 				return $http.delete(urlBase + '/' + item.id);
+			}
+		}
+	}]);
+sharedModule
+	.controller('assignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
+		$scope.tasks = Preloader.get();
+		$scope.busy = false;
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.setDesigner = function(){
+			angular.forEach($scope.tasks, function(task, key){
+				if(task.include){
+					task.designer_id = $scope.designer;
+				}
+			});
+		}
+
+		var query = {
+			'where': [
+				{
+					'label': 'role',
+					'condition': '=',
+					'value': 'designer',
+				}
+			],
+		}
+
+		User.enlist(query)
+			.success(function(data){
+				$scope.users = data;
+			})
+
+		$scope.submit = function(){
+			if($scope.assignTaskForm.$invalid){
+				angular.forEach($scope.assignTaskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.busy){
+				$scope.busy = true;
+				DesignerAssigned.store($scope.tasks)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('reassignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
+		$scope.task = Preloader.get();
+		$scope.designer = $scope.task.designer_assigned.designer.id;
+		$scope.busy = false;
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.setDesigner = function(){
+			$scope.task.designer_id = $scope.designer;
+		}
+
+		var query = {
+			'where': [
+				{
+					'label': 'role',
+					'condition': '=',
+					'value': 'designer',
+				}
+			],
+		}
+
+		User.enlist(query)
+			.success(function(data){
+				$scope.users = data;
+			})
+
+		$scope.submit = function(){
+			if($scope.assignTaskForm.$invalid){
+				angular.forEach($scope.assignTaskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.busy){
+				$scope.busy = true;
+				DesignerAssigned.update($scope.task.id, $scope.task)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
 			}
 		}
 	}]);

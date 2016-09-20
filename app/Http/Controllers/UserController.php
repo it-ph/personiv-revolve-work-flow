@@ -12,6 +12,10 @@ use App\User;
 
 class UserController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:quality_control,admin')->except('enlist', 'changePassword', 'checkPassword', 'logout', 'check');
+    }
     /**
      * Enlist the request of user.
      *

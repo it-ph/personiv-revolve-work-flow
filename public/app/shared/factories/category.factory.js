@@ -19,7 +19,7 @@ sharedModule
 				return $http.delete(urlBase + '/' + id);
 			},
 			checkDuplicate: function(data){
-				return $http.post(urlBase + '-check-duplicate', data);
+				return $http.post(urlBase + '/check-duplicate', data);
 			},
 		}
 	}]);

@@ -14,45 +14,20 @@ use App\DesignerAssigned;
 use Carbon\Carbon;
 use Auth;
 use App\Notifications\TaskCreated;
+use App\Notifications\TaskDeleted;
 use App\Notifications\SpreadsheetCreated;
-use App\Notifications\DesignerTaskStart;
 use App\Events\PusherTaskCreated;
+use App\Events\PusherTaskDeleted;
 use App\Events\PusherSpreadsheetCreated;
-use App\Events\PusherDesignerTaskStart;
 use App\Events\Test;
 
 class TaskController extends Controller
 {
-    public function started(Request $request)
+    public function __construct()
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'designer_assigned.id' => 'required|numeric',
-        ]);
-
-        $task = Task::where('id', $request->id)->first();
-
-        $task->status = 'in_progress';
-
-        $task->save();
-
-        $designer_assigned = DesignerAssigned::where('id', $request->designer_assigned)->first();
-
-        $designer_assigned->time_start = Carbon::now();
-
-        $designer_assigned->save();
-
-        $designer_assigned->task = Task::where('id', $designer_assigned->task_id)->first();
-
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
-
-        foreach ($users as $key => $user) {
-            // save the notifications to database - designer assigned, sender
-            $user->notify(new DesignerTaskStart($designer_assigned, Auth::user()));
-            // broadcast the notifications - designer assigned, sender, recipient
-            event(new PusherDesignerTaskStart($designer_assigned->task, Auth::user(), $user));
-        }
+        $this->middleware('role:quality_control,admin')->except('enlist', 'paginate');
     }
+
     /**
      * Store multiple tasks.
      *
@@ -371,8 +346,6 @@ class TaskController extends Controller
             // broadcast the notifications - task, sender, recipient
             event(new PusherTaskCreated($task, Auth::user(), $user));
         }
-
-        return Task::with(['category' => function($query){ $query->withTrashed(); }])->with(['client' => function($query){ $query->withTrashed(); }])->where('id', $task->id)->first();
     }
 
     /**
@@ -417,6 +390,18 @@ class TaskController extends Controller
      */
     public function destroy($id)
     {
-        //
+        $task = Task::where('id', $id)->first();
+
+        // fetch the users to be notified
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [Auth::user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - task, sender
+            $user->notify(new TaskDeleted($task, Auth::user()));
+            // broadcast the notifications - task, sender, recipient
+            event(new PusherTaskDeleted($task, Auth::user(), $user));
+        }
+
+        $task->delete();
     }
 }

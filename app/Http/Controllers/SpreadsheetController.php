@@ -15,6 +15,10 @@ use Excel;
 
 class SpreadsheetController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:quality_control,admin');
+    }
     /**
      * Paginate list of sheets.
      *

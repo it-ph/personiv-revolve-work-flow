@@ -20,7 +20,16 @@ sharedModule
 			},
 			paginate: function(data, page)
 			{
-				return $http.post(urlBase + '-paginate?page=' + page, data);
+				return $http.post(urlBase + '/paginate?page=' + page, data);
+			},
+			start: function(data){
+				return $http.post(urlBase + '/start', data);
+			},
+			decline: function(data){
+				return $http.post(urlBase + '/decline', data);
+			},
+			forQC: function(data){
+				return $http.post(urlBase + '/for-qc', data);
 			},
 		}
 	}]);

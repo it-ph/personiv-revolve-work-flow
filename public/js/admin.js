@@ -381,6 +381,45 @@ adminModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\TaskDeleted'){
+					notif.message = 'deleted a task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\DesignerTaskDecline'){
+					notif.message = 'declined to work on ' + notif.data.attachment.task.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\ForQC'){
+					notif.message = 'submitted a task for quality control.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -451,6 +490,33 @@ adminModule
 				    	Preloader.newNotification(message);
 
 				    	// if state is sheets 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskDeleted', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' deleted a task.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is trackers 
+
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherDesignerTaskDecline', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' declined to work on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is sheets 
+
+				    }),
+
+				     channel.user.bind('App\\Events\\PusherForQC', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' submitted a task for quality control.';
+				    	Preloader.newNotification(message);
+
+				    	// if state is trackers 
 
 				    }),
 			    ];
@@ -953,60 +1019,6 @@ adminModule
 
 		$scope.action = function(idx){
 			$mdBottomSheet.hide(idx);
-		}
-	}]);
-adminModule
-	.controller('assignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
-		$scope.tasks = Preloader.get();
-		$scope.busy = false;
-
-		$scope.cancel = function(){
-			$mdDialog.cancel();
-		}
-
-		$scope.setDesigner = function(){
-			angular.forEach($scope.tasks, function(task, key){
-				if(task.include){
-					task.designer_id = $scope.designer;
-				}
-			})
-		}
-
-		var query = {
-			'where': [
-				{
-					'label': 'role',
-					'condition': '=',
-					'value': 'designer',
-				}
-			],
-		}
-
-		User.enlist(query)
-			.success(function(data){
-				$scope.users = data;
-			})
-
-		$scope.submit = function(){
-			if($scope.assignTaskForm.$invalid){
-				angular.forEach($scope.assignTaskForm.$error, function(field){
-					angular.forEach(field, function(errorField){
-						errorField.$setTouched();
-					});
-				});
-
-				return;
-			}
-			if(!$scope.busy){
-				$scope.busy = true;
-				DesignerAssigned.store($scope.tasks)
-					.success(function(){
-						Preloader.stop();
-					})
-					.error(function(){
-						Preloader.error();
-					});
-			}
 		}
 	}]);
 adminModule

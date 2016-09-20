@@ -1,14 +1,25 @@
 <div layout="row" layout-align="center center" flex layout-padding> 
-    <md-card flex flex-gt-lg="80">
+    <md-card flex flex-gt-lg="80" ng-if="!unauthorized">
         <md-card-header>
             <md-card-avatar class="circle primary-bg" layout="row" layout-align="center center">
-                <span class="md-headline white-text">{{ task.file_name.charAt(0).toUpperCase() }}</span>
+                <span class="md-headline white-text">{{ task.first_letter }}</span>
             </md-card-avatar>
             <md-card-header-text>
                 <span class="md-title">{{ task.file_name }}</span>
-                <span class="md-subhead">{{ task.client.name }} - {{ task.category.name }}</span>
+                <span class="md-subhead">{{ task.client }} - {{ task.category }}</span>
             </md-card-header-text>
         </md-card-header>
+        <md-card-title>
+            <md-card-title-text>
+                <span class="md-headline primary-text">
+                    <span ng-if="task.status == 'pending'">Pending</span>
+                    <span ng-if="task.status == 'in_progress'">In progress</span>
+                    <span ng-if="task.status == 'for_qc'">For QC</span>
+                    <span ng-if="task.status == 'rework'">Rework</span>
+                    <span ng-if="task.status == 'complete'">Complete</span>
+                </span>
+            </md-card-title-text>
+        </md-card-title>
         <md-card-content>
             <!-- Desinger -->
             <table class="table">
@@ -41,10 +52,10 @@
                 </tr>
             </table>
         </md-card-content>
-        <md-divider></md-divider>
-        <md-card-actions layout="row" layout-align="start center">
+        <md-divider ng-if="!task.deleted_at"></md-divider>
+        <md-card-actions layout="row" layout-align="start center" ng-if="!task.deleted_at">
             <div ng-if="task.status == 'pending' && user.role == 'designer'">
-                <md-button aria-label="Start" ng-click="start()">
+                <md-button aria-label="Start Design" ng-click="start()">
                     Start
                 </md-button>
                 <md-button aria-label="Decline" ng-click="decline()">
@@ -55,8 +66,21 @@
                 <md-button aria-label="Assign" ng-click="assign()" ng-if="!task.designer_assigned">
                     Assign
                 </md-button>
-                <md-button aria-label="Reassign" ng-click="reassign()">
+                <md-button aria-label="Delete" ng-click="delete()" ng-if="!task.designer_assigned">
+                    Delete
+                </md-button>
+                <md-button aria-label="Reassign" ng-click="reassign()" ng-if="task.designer_assigned">
                     Reassign
+                </md-button>
+            </div>
+            <div ng-if="task.status == 'in_progress' && user.role == 'designer'">
+                <md-button aria-label="For QC" ng-click="forQC()">
+                    For QC
+                </md-button>
+            </div>
+            <div ng-if="task.status == 'for_qc' && user.role != 'designer'">
+                <md-button aria-label="Start QC" ng-click="startQC()">
+                    Start
                 </md-button>
             </div>
         </md-card-actions>
@@ -71,4 +95,16 @@
             </div>
         </form> -->
     </md-card>
+    <md-content flex layout-margin ng-if="unauthorized">
+        <h1 hide-sm hide-md show-gt-md class="md-display-4 primary-text">Forbidden</h1>
+        <p>Sorry, but you are not authorized to view this page.</p>
+        <p>It looks like this was the result of either:</p>
+        <ul>
+            <li>task was re-assigned</li>
+            <li>an out-of-date link</li>
+        </ul>
+        <div class="md-actions" layout="row">
+            <a ui-sref="main.tracker" class="md-button md-primary">Back to tracker</a>
+        </div>
+    </md-content>
 </div>

@@ -28,4 +28,27 @@ class HomeController extends Controller
         
         return view('home')->with('user', $user);
     }
+
+    /**
+     * Redirects user to appropriate home page if authenticated.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function home()
+    {
+        if (Auth::check()) {
+            return redirect('/home');
+        }
+        return view('auth.login');
+    }
+
+    /**
+     * Disable register routes.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function disableRegister()
+    {
+        return redirect('/');
+    }    
 }

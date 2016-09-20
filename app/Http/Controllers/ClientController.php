@@ -9,6 +9,10 @@ use App\Client;
 
 class ClientController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:quality_control,admin')->except('index');
+    }
     /**
      * Enlist the request of user.
      *

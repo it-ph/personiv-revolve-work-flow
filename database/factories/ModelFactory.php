@@ -22,6 +22,15 @@ $factory->define(App\User::class, function (Faker\Generator $faker) {
     ];
 });
 
+// Pending Task
+$factory->defineAs(App\User::class, 'designer', function ($faker) use ($factory) {
+    $task = $factory->raw(App\User::class);
+
+    return array_merge($task, ['role' => 'designer']);
+});
+
+
+
 $factory->define(App\Task::class, function (Faker\Generator $faker) {
     static $password;
 
@@ -29,8 +38,8 @@ $factory->define(App\Task::class, function (Faker\Generator $faker) {
         'delivery_date' => Carbon::parse('today')->toDateTimeString(),
         'live_date' => Carbon::parse('today')->addDay()->toDateTimeString(),
         'file_name' => str_random(10) .'.jpg',
-        'client_id' => 2,
-        'category_id' => 2,
+        'client_id' => 1,
+        'category_id' => 1,
     ];
 });
 

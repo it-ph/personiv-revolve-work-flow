@@ -139,6 +139,12 @@ md-content.dirty-white {
 .accent-bg {
   background: #FF4081; }
 
+.primary-shade-bg {
+  background: #0288D1; }
+
+.orange-bg {
+  background: #FF9800; }
+
 .blur-white {
   background: rgba(255, 255, 255, 0.1); }
 

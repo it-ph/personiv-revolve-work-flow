@@ -1,7 +1,7 @@
 <div infinite-scroll='task.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="task.busy" infinite-scroll-parent ng-if="task.show">
 	<md-list>
-		<md-list-item ng-if="!selectMultiple && !(subheader.current.label == 'Pending' && task.designer_assigned) && (showInactive || !task.deleted_at)" class="md-3-line md-long-text secondary-button-padding" ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ui-sref="main.task({taskID:task.id})">
-			<h2 class="md-avatar" ng-class="task.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
+		<md-list-item ng-if="!selectMultiple && (showInactive || !task.deleted_at)" class="md-3-line md-long-text secondary-button-padding" ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ui-sref="main.task({taskID:task.id})">
+			<h2 class="md-avatar" ng-class="task.designer_assigned ? 'orange-bg': (task.deleted_at ? 'accent-bg' : 'primary-bg')" layout="row" layout-align="center center">
 				<span class="md-headline white-text">{{task.first_letter}}</span>
 			</h2>
 			<div class="md-list-item-text">

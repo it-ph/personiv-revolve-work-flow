@@ -50,7 +50,7 @@ sharedModule
 			/* Starts the preloader */
 			preload: function(){
 				return $mdDialog.show({
-					templateUrl: '/app/shared/templates/loading.html',
+					templateUrl: '/app/shared/views/loading.html',
 				    parent: angular.element(document.body),
 				});
 			},
@@ -79,7 +79,7 @@ sharedModule
 				return dataHolder;
 			},
 			checkDuplicate: function(urlBase, data){
-				return $http.post(urlBase + '-check-duplicate', data);
+				return $http.post(urlBase + '/check-duplicate', data);
 			},
 		};
 	}]);

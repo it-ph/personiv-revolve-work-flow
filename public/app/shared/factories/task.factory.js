@@ -21,22 +21,19 @@ sharedModule
 			paginate: function(data, page){
 				if(!page)
 				{
-					return $http.post(urlBase + '-paginate', data);
+					return $http.post(urlBase + '/paginate', data);
 				}
 				
-				return $http.post(urlBase + '-paginate?page=' + page, data);
+				return $http.post(urlBase + '/paginate?page=' + page, data);
 			},
 			storeMultiple: function(data){
-				return $http.post(urlBase + '-store-multiple', data);
+				return $http.post(urlBase + '/store-multiple', data);
 			},
 			checkDuplicateMultiple: function(data){
-				return $http.post(urlBase + '-check-duplicate-multiple', data);
+				return $http.post(urlBase + '/check-duplicate-multiple', data);
 			},
 			enlist: function(data){
-				return $http.post(urlBase + '-enlist', data);
+				return $http.post(urlBase + '/enlist', data);
 			},
-			started: function(data){
-				return $http.post(urlBase + '-started', data);
-			}
 		}
 	}]);

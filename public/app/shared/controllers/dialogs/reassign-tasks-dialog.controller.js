@@ -1,6 +1,7 @@
-adminModule
-	.controller('assignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
-		$scope.tasks = Preloader.get();
+sharedModule
+	.controller('reassignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
+		$scope.task = Preloader.get();
+		$scope.designer = $scope.task.designer_assigned.designer.id;
 		$scope.busy = false;
 
 		$scope.cancel = function(){
@@ -8,11 +9,7 @@ adminModule
 		}
 
 		$scope.setDesigner = function(){
-			angular.forEach($scope.tasks, function(task, key){
-				if(task.include){
-					task.designer_id = $scope.designer;
-				}
-			})
+			$scope.task.designer_id = $scope.designer;
 		}
 
 		var query = {
@@ -42,7 +39,7 @@ adminModule
 			}
 			if(!$scope.busy){
 				$scope.busy = true;
-				DesignerAssigned.store($scope.tasks)
+				DesignerAssigned.update($scope.task.id, $scope.task)
 					.success(function(){
 						Preloader.stop();
 					})

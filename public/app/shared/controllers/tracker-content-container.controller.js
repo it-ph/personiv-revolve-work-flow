@@ -138,7 +138,7 @@ sharedModule
 								Preloader.set($scope.task.items);
 								$mdDialog.show({
 							      	controller: 'assignTasksDialogController',
-							      	templateUrl: '/app/components/admin/templates/dialogs/assign-tasks-dialog.template.html',
+							      	templateUrl: '/app/shared/templates/dialogs/assign-tasks-dialog.template.html',
 							      	parent: angular.element(document.body),
 							      	fullscreen: true,
 							    })

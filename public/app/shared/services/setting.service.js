@@ -2,12 +2,12 @@ sharedModule
 	.service('Setting', ['$http', '$mdToast', function($http, $mdToast){
 		return {
 			paginate: function(type, page){
-				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user-designers' : 'user-quality_control'));
+				var urlBase = type == 'Categories' ? 'category' : (type == 'Clients' ? 'client' : (type == 'Designers' ? 'user/designers' : 'user/quality_control'));
 
-				return $http.get(urlBase + '-paginate?page=' + page);
+				return $http.post(urlBase + '/paginate?page=' + page);
 			},
 			search: function(type, data){
-				var urlBase = type == 'Categories' ? 'category-enlist' : (type == 'Clients' ? 'client-enlist' : 'user-enlist');
+				var urlBase = type == 'Categories' ? 'category/enlist' : (type == 'Clients' ? 'client/enlist' : 'user/enlist');
 
 				return $http.post(urlBase, data);
 			},
