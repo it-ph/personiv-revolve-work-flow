@@ -28,8 +28,10 @@ Route::resource('category', 'CategoryController');
 Route::resource('client', 'ClientController');
 Route::resource('comment', 'CommentController');
 Route::resource('designer-assigned', 'DesignerAssignedController');
+Route::resource('designer-rework', 'DesignerReworkController');
 Route::resource('notification', 'NotificationController');
 Route::resource('quality-control-assigned', 'QualityControlAssignedController');
+Route::resource('quality-control-rework', 'QualityControlReworkController');
 Route::resource('rework', 'ReworkController');
 Route::resource('spreadsheet', 'SpreadsheetController');
 Route::resource('task', 'TaskController');
@@ -77,12 +79,18 @@ Route::group(['prefix' => 'spreadsheet'], function(){
 	Route::get('read/{spreadsheetID}', 'SpreadsheetController@read');
 });
 
-/* DesignerAssigned Routes */
+/* Designer Assigned Routes */
 Route::group(['prefix' => 'designer-assigned'], function(){
 	Route::post('paginate', 'DesignerAssignedController@paginate');
 	Route::post('start', 'DesignerAssignedController@start');
 	Route::post('decline', 'DesignerAssignedController@decline');
 	Route::post('for-qc', 'DesignerAssignedController@forQC');
+});
+
+/* Quality Control Assigned Routes */
+Route::group(['prefix' => 'quality-control-assigned'], function(){
+	Route::post('complete', 'QualityControlAssignedController@complete');
+	Route::post('rework', 'QualityControlAssignedController@rework');
 });
 
 /* Notification Routes */

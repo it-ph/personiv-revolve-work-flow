@@ -1,4 +1,4 @@
-adminModule
+sharedModule
 	.controller('itemActionsDialogController', ['$scope', '$mdDialog', 'Preloader', function($scope, $mdDialog, Preloader){
 		$scope.type = Preloader.get();
 

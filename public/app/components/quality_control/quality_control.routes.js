@@ -1,4 +1,4 @@
-adminModule
+qualityControlModule
 	.config(['$stateProvider', function($stateProvider){
 		$stateProvider
 			.state('main', {

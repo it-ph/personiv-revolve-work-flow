@@ -1,10 +1,10 @@
-adminModule
-	.controller('editClientsDialogController', ['$scope', '$mdDialog', 'Preloader', 'Client', function($scope, $mdDialog, Preloader, Client){
-		var urlBase = 'client';
+sharedModule
+	.controller('editCategoriesDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', function($scope, $mdDialog, Preloader, Category){
+		var urlBase = 'category';
 		
-		Client.show(Preloader.get().id)
+		Category.show(Preloader.get().id)
 			.success(function(data){
-				$scope.client = data;
+				$scope.category = data;
 				$scope.label = data.name;
 			})
 
@@ -12,7 +12,7 @@ adminModule
 		$scope.duplicate = false;
 
 		$scope.checkDuplicate = function(){
-			Preloader.checkDuplicate(urlBase, $scope.client)
+			Preloader.checkDuplicate(urlBase, $scope.category)
 				.success(function(data){
 					$scope.duplicate = data;
 				})
@@ -23,8 +23,8 @@ adminModule
 		}
 
 		$scope.submit = function(){
-			if($scope.clientForm.$invalid){
-				angular.forEach($scope.clientForm.$error, function(field){
+			if($scope.categoryForm.$invalid){
+				angular.forEach($scope.categoryForm.$error, function(field){
 					angular.forEach(field, function(errorField){
 						errorField.$setTouched();
 					});
@@ -34,7 +34,7 @@ adminModule
 			}
 			if(!$scope.duplicate){
 				$scope.busy = true;
-				Client.update($scope.client.id, $scope.client)
+				Category.update($scope.category.id, $scope.category)
 					.success(function(duplicate){
 						if(duplicate){
 							$scope.busy = false;

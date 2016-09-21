@@ -1,6 +1,6 @@
 sharedModule
-	.factory('QualityControlAssigned', ['$http', function($http){
-		var urlBase = '/quality-control-assigned';
+	.factory('QualityControlRework', ['$http', function($http){
+		var urlBase = '/quality-control-rework';
 
 		return {
 			index: function(){
@@ -17,12 +17,6 @@ sharedModule
 			},
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
-			},
-			complete: function(data){
-				return $http.post(urlBase + '/complete', data);
-			},
-			rework: function(data){
-				return $http.post(urlBase + '/rework', data);
 			},
 		}
 	}]);

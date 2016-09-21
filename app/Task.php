@@ -36,6 +36,11 @@ class Task extends Model
         return $this->hasOne('App\QualityControlAssigned');
     }
 
+    public function reworks()
+    {
+        return $this->hasMany('App\Rework');
+    }
+
     public function comments()
     {
         return $this->hasMany('App\Comment');

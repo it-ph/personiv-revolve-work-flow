@@ -34,6 +34,9 @@ elixir(function(mix) {
         /* Admin Scripts */
         .scriptsIn('public/app/components/admin', 'public/js/admin.js')
 
-        /* Artist Scripts */
+        /* Designer Scripts */
         .scriptsIn('public/app/components/designer', 'public/js/designer.js')
+
+        /* Quality Control Scripts */
+        .scriptsIn('public/app/components/quality_control', 'public/js/quality_control.js')
 });

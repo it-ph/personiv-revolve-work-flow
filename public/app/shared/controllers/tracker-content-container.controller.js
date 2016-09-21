@@ -10,6 +10,10 @@ sharedModule
 			return results;
 		}
 		$scope.toolbar.searchAll = true;
+
+		$scope.$on('refresh', function(){
+			$scope.init($scope.subheader.current.request);
+		});
 		/**
 		 * Reveals the search bar.
 		 *

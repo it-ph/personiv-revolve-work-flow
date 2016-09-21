@@ -76,6 +76,32 @@ designerModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\NotifyDesignerForCompleteTask'){
+					notif.message = 'marked your task ' + notif.data.attachment.file_name + ' as complete.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\NotifyComment'){
+					notif.message = 'commented on your task on ' + notif.data.attachment.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -115,11 +141,23 @@ designerModule
 			    channel.user.bindings = [
 				    channel.user.bind('App\\Events\\PusherNotifyDesignerForNewTask', function(data) {
 				    	fetchUnreadNotifications();
-				    	var message = data.sender.name + ' assigned a task to you.';
+				    	var message = data.sender.name + ' assigned a task for you.';
 				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
 
-				    	// if state is sheets 
+				    channel.user.bind('App\\Events\\PusherNotifyDesignerForCompleteTask', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' marked your task ' + data.data.file_name + ' as complete.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
 
+				    channel.user.bind('App\\Events\\PusherNotifyComment', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' commented on your task on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+				    	$scope.$broadcast('refresh');
 				    }),
 			    ];
 			})

@@ -1,4 +1,4 @@
-adminModule
+sharedModule
 	.controller('createTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', 'Client', 'Task', function($scope, $mdDialog, Preloader, Category, Client, Task){
 		var urlBase = 'task';
 		$scope.task = {};

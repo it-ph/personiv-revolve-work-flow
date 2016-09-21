@@ -1,4 +1,4 @@
-adminModule
+sharedModule
 	.controller('itemActionsBottomSheetController', ['$scope', '$mdBottomSheet', 'Preloader', function($scope, $mdBottomSheet, Preloader){
 		$scope.type = Preloader.get();
 

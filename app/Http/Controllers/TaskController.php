@@ -181,10 +181,35 @@ class TaskController extends Controller
 
                     continue;
                 }
-                else if($request->input('with')[$i]['relation'] == 'quality_control')
+                else if($request->input('with')[$i]['relation'] == 'quality_control_assigned')
                 {
                      $tasks->with([$request->input('with')[$i]['relation'] => function($query){ 
                         $query->with(['quality_control' => function($query){
+                            $query->withTrashed();
+                        }]);
+                    }]);
+
+                    continue;
+                }
+
+                else if($request->input('with')[$i]['relation'] == 'reworks')
+                {
+                    $tasks->with([$request->input('with')[$i]['relation'] => function($query){ 
+                        $query->with(['designer' => function($query){
+                            $query->withTrashed();
+                        }])->with(['quality_control' => function($query){
+                            $query->withTrashed();
+                        }]);
+                    }]);
+
+                    continue;
+                }
+
+                // Manually created this because of looping issue
+                else if($request->input('with')[$i]['relation'] == 'comments')
+                {
+                    $tasks->with([$request->input('with')[$i]['relation'] => function($query){ 
+                        $query->with(['user' => function($query){
                             $query->withTrashed();
                         }]);
                     }]);

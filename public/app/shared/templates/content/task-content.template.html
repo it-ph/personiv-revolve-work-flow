@@ -52,11 +52,51 @@
                 </tr>
             </table>
         </md-card-content>
+        <md-divider></md-divider>
+        <md-card-title ng-if="task.reworks.length">
+            <md-card-title-text>
+                <span class="md-headline primary-text">
+                    <span>Revisions</span>
+                </span>
+            </md-card-title-text>
+        </md-card-title>
+        <md-card-content>
+            <div ng-repeat="rework in task.reworks">            
+                <table class="table">
+                    <tr>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Designer</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Start</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">End</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Minutes spent</th>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer.name }} <span ng-if="!rework.designer.name">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.designer_time_start">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.designer_time_end">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_minutes_spent}} <span ng-if="!task.designer_assigned.designer_minutes_spent">N/A</span></td>
+                    </tr>
+                </table>
+                <table class="table">
+                    <tr>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Quality Control</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Start</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">End</th>
+                        <th class="col-xs-3 col-sm-3 col-md-3 col-lg-3">Minutes spent</th>
+                    </tr>
+                    <tr>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control.name }} <span ng-if="!rework.quality_control.name">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.quality_control_time_start">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.quality_control_time_end">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_minutes_spent}} <span ng-if="!task.designer_assigned.quality_control_minutes_spent">N/A</span></td>
+                    </tr>
+                </table>
+            </div>
+        </md-card-content>
         <md-divider ng-if="!task.deleted_at"></md-divider>
         <md-card-actions layout="row" layout-align="start center" ng-if="!task.deleted_at">
             <div ng-if="task.status == 'pending' && user.role == 'designer'">
                 <md-button aria-label="Start Design" ng-click="start()">
-                    Start
+                    Design Start
                 </md-button>
                 <md-button aria-label="Decline" ng-click="decline()">
                     Decline
@@ -74,26 +114,65 @@
                 </md-button>
             </div>
             <div ng-if="task.status == 'in_progress' && user.role == 'designer'">
-                <md-button aria-label="For QC" ng-click="forQC()">
+                <md-button aria-label="For QC" ng-click="forQC()" ng-if="!task.quality_control_assigned">
                     For QC
+                </md-button>
+                <md-button aria-label="For QC" ng-click="forQC()" ng-if="task.rework">
+                    Revised For QC
                 </md-button>
             </div>
             <div ng-if="task.status == 'for_qc' && user.role != 'designer'">
                 <md-button aria-label="Start QC" ng-click="startQC()">
-                    Start
+                    QC Start
+                </md-button>
+            </div>
+            <div ng-if="task.status == 'in_progress' && user.role != 'designer' && task.quality_control_assigned">
+                <md-button aria-label="Rework" ng-click="rework()">
+                    Rework
+                </md-button>
+                <md-button aria-label="Complete" ng-click="complete()">
+                    Complete
+                </md-button>
+            </div>
+            <div ng-if="task.status == 'rework' && user.role == 'designer'">
+                <md-button aria-label="Revision Start" ng-click="revision()">
+                    Revision Start
+                </md-button>
+                <md-button aria-label="Pass" ng-click="pass()">
+                    Pass
                 </md-button>
             </div>
         </md-card-actions>
-        <!-- <md-divider></md-divider>
-        <form name="form.commentSection" novalidate flex>
-            <div layout="column" flex>            
-                <md-input-container md-no-float class="md-block">
-                    <label>Write a comment..</label>
-                    <md-icon class="mdi mdi-account grey"></md-icon>
-                    <textarea name="Comment" ng-model="comment"></textarea>
-                </md-input-container>
-            </div>
-        </form> -->
+        <div ng-if="task.comments.length">
+            <md-divider></md-divider>
+            <md-subheader class="md-no-sticky">Comments</md-subheader>
+            <md-list>
+                <md-list-item class="md-3-line md-long-text" ng-repeat="comment in task.comments">
+                    <h2 class="md-avatar" ng-class="comment.user.role != 'designer' ? 'orange-bg': 'primary-bg'" layout="row" layout-align="center center">
+                        <span class="md-headline white-text">{{comment.first_letter}}</span>
+                    </h2>
+                    <div class="md-list-item-text">
+                        <h3>{{comment.user.name}}</h3>
+                        <h4>{{comment.message}}</h4>
+                        <span>
+                            <span am-time-ago="comment.created_at"></span>
+                            <md-tooltip>{{comment.created_at | date: 'EEEE, MMM dd, yyyy, hh:mma'}}</md-tooltip>
+                        </span>
+                    </div>
+                </md-list-item>
+            </md-list>
+            <form name="form.commentSection" novalidate flex ng-if="task.comments.length">
+                <div layout="column" flex>            
+                    <md-input-container md-no-float class="md-block">
+                        <label>Write a comment..</label>
+                        <md-icon class="mdi mdi-account grey"></md-icon>
+                        <textarea name="Comment" ng-model="comment.message"></textarea>
+                    </md-input-container>
+                </div>
+                <md-button type="submit" ng-if="!busy" ng-click="submit()">Comment</md-button>
+                <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+            </form>
+        </div>
     </md-card>
     <md-content flex layout-margin ng-if="unauthorized">
         <h1 hide-sm hide-md show-gt-md class="md-display-4 primary-text">Forbidden</h1>

@@ -3,6 +3,18 @@ sharedModule
 		var dataHolder = null;
 
 		return {
+			prompt: function(data)
+			{
+				var prompt = $mdDialog.prompt()
+			    	.title(data.title)
+			      	.textContent(data.message)
+			      	.placeholder(data.placeholder)
+			      	.ariaLabel(data.title)
+			      	.ok(data.ok)
+			      	.cancel(data.cancel);
+
+			    return $mdDialog.show(prompt);
+			},
 			confirm: function(data)
 			{
 				var confirm = $mdDialog.confirm()

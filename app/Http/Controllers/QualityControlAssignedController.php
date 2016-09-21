@@ -3,13 +3,128 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use App\Http\Requests;
+
 use Auth;
 use Carbon\Carbon;
+
 use App\QualityControlAssigned;
-use App\Http\Requests;
+use App\Task;
+use App\User;
+use App\Rework;
+
+
+use App\Notifications\QualityControlTaskStart;
+use App\Notifications\NotifyDesignerForCompleteTask;
+use App\Notifications\NotifyDesignerForTaskRework;
+use App\Notifications\MarkAsComplete;
+use App\Notifications\TaskRework;
+
+use App\Events\PusherQualityControlTaskStart;
+use App\Events\PusherNotifyDesignerForCompleteTask;
+use App\Events\PusherNotifyDesignerForTaskRework;
+use App\Events\PusherMarkAsComplete;
+use App\Events\PusherTaskRework;
 
 class QualityControlAssignedController extends Controller
 {
+    public function __construct()
+    {
+        $this->middleware('role:quality_control,admin');
+    }
+
+    /**
+     * Mark task as rework.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function rework(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'quality_control_assigned.id' => 'required|numeric',
+            'designer_assigned.designer_id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'rework';
+
+        $task->save();
+
+        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
+
+        $quality_control_assigned->time_end = Carbon::now();
+
+        $quality_control_assigned->minutes_spent = Carbon::parse($quality_control_assigned->time_start)->diffInMinutes(Carbon::parse($quality_control_assigned->time_end));
+
+        $quality_control_assigned->save();
+
+        $rework = new Rework;
+
+        $rework->task_id = $task->id;
+
+        $rework->designer_id = $request->input('designer_assigned.designer_id');
+
+        $rework->save();
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - task, sender
+            $user->notify(new TaskRework($task, Auth::user()));
+            // broadcast the notifications - task, sender, recipient
+            event(new PusherTaskRework($task, Auth::user(), $user));
+        }
+
+        $designer = User::where('id', $request->input('designer_assigned.designer_id'))->first();
+
+        $designer->notify(new NotifyDesignerForTaskRework($task, Auth::user()));
+        event(new PusherNotifyDesignerForTaskRework($task, Auth::user(), $designer));
+    }
+
+    /**
+     * Mark a task as complete.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function complete(Request $request)
+    {
+        $this->validate($request, [
+            'id' => 'required|numeric',
+            'quality_control_assigned.id' => 'required|numeric',
+            'designer_assigned.designer_id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'complete';
+
+        $task->save();
+
+        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
+
+        $quality_control_assigned->time_end = Carbon::now();
+
+        $quality_control_assigned->minutes_spent = Carbon::parse($quality_control_assigned->time_start)->diffInMinutes(Carbon::parse($quality_control_assigned->time_end));
+
+        $quality_control_assigned->save();
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - task, sender
+            $user->notify(new MarkAsComplete($task, Auth::user()));
+            // broadcast the notifications - task, sender, recipient
+            event(new PusherMarkAsComplete($task, Auth::user(), $user));
+        }
+
+        $designer = User::where('id', $request->input('designer_assigned.designer_id'))->first();
+
+        $designer->notify(new NotifyDesignerForCompleteTask($task, Auth::user()));
+        event(new PusherNotifyDesignerForCompleteTask($task, Auth::user(), $designer));
+    }
+
     /**
      * Display a listing of the resource.
      *
@@ -38,7 +153,36 @@ class QualityControlAssignedController extends Controller
      */
     public function store(Request $request)
     {
-        //
+        $this->validate($request, [
+            'id' => 'required|numeric',
+        ]);
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'in_progress';
+
+        $task->save();
+
+        $quality_control_assigned = new QualityControlAssigned;
+
+        $quality_control_assigned->task_id = $task->id;
+
+        $quality_control_assigned->quality_control_id = $request->user()->id;
+
+        $quality_control_assigned->time_start = Carbon::now();
+
+        $quality_control_assigned->save();
+
+        $quality_control_assigned->task = $task;
+
+        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+        foreach ($users as $key => $user) {
+            // save the notifications to database - quality control assigned, sender
+            $user->notify(new QualityControlTaskStart($quality_control_assigned, Auth::user()));
+            // broadcast the notifications - quality control assigned, sender, recipient
+            event(new PusherQualityControlTaskStart($quality_control_assigned->task, Auth::user(), $user));
+        }
     }
 
     /**

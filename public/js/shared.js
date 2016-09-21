@@ -77,6 +77,345 @@ sharedModule
 		};
 	}]);
 sharedModule
+	.controller('sharedDashboardContentContainerController', ['$scope', 'Preloader', 'User', function($scope, Preloader, User){
+		$scope.toolbar = {};
+
+		$scope.toolbar.childState = 'Dashboard';
+	}]);
+sharedModule
+	.controller('sharedMainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){
+		$scope.toggleSidenav = function(menuID){
+			$mdSidenav(menuID).toggle();
+		}
+
+		$scope.menu = {};
+
+		$scope.menu.static = [
+			{
+				'state': 'main',
+				'icon': 'mdi-view-dashboard',
+				'label': 'Dashboard',
+			},
+			{
+				'state': 'main.sheets',
+				'icon': 'mdi-file-excel',
+				'label': 'Sheets',
+			},
+			{
+				'state': 'main.tracker',
+				'icon': 'mdi-view-list',
+				'label': 'Tracker',
+			},
+			{
+				'state': 'main.notifications',
+				'icon': 'mdi-bell',
+				'label': 'Notifications',
+			},
+			{
+				'state': 'main.settings',
+				'icon': 'mdi-settings',
+				'label': 'Settings',
+			},
+		]
+		
+
+		$scope.logout = function(){
+			User.logout()
+				.success(function(){
+					window.location.href = '/';
+				});
+		}
+
+		$scope.changePassword = function()
+		{
+			$mdDialog.show({
+		      controller: 'changePasswordDialogController',
+		      templateUrl: '/app/shared/templates/dialogs/change-password-dialog.template.html',
+		      parent: angular.element(document.body),
+		      fullscreen: true,
+		    })
+		    .then(function(){
+		    	$mdToast.show(
+		    		$mdToast.simple()
+				        .content('Password changed.')
+				        .position('bottom right')
+				        .hideDelay(3000)
+		    	);
+		    });
+		}
+
+		var fetchUnreadNotifications = function(){
+			User.check()
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
+		var formatNotification = function(data){
+			angular.forEach(data.unread_notifications, function(notif){
+				notif.first_letter = notif.data.sender.name.charAt(0).toUpperCase();
+				notif.sender = notif.data.sender.name;
+				notif.created_at = new Date(notif.created_at);
+
+				if(notif.type == 'App\\Notifications\\TaskCreated'){
+					notif.message = 'created a new task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
+					notif.message = 'created a new sheet.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.sheet', {'sheetID': notif.data.attachment.id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\TaskAssignedToDesigner'){
+					notif.message = 'assigned a task for ' + notif.data.attachment.designer.name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\DesignerTaskStart'){
+					notif.message = 'started to work on ' + notif.data.attachment.task.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\TaskDeleted'){
+					notif.message = 'deleted a task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\DesignerTaskDecline'){
+					notif.message = 'declined to work on ' + notif.data.attachment.task.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\ForQC'){
+					notif.message = 'submitted a task for quality control.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\QualityControlTaskStart'){
+					notif.message = 'started to work on ' + notif.data.attachment.task.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
+					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as complete.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\TaskRework'){
+					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as rework.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
+
+				else if(notif.type == 'App\\Notifications\\NotifyComment'){
+					notif.message = 'commented on a task on ' + notif.data.attachment.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+			});
+
+			return data;
+		}
+
+		$scope.markAsRead = function(id){
+			Notification.markAsRead(id)
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
+		$scope.markAllAsRead = function(){
+			Notification.markAllAsRead()
+				.success(function(data){
+					formatNotification(data);
+					$scope.user = data;
+				})
+		}
+
+		User.check()
+			.success(function(data){
+				formatNotification(data);
+
+				$scope.user = data;
+
+				var pusher = new Pusher('58891c6a307bb58de62e', {
+			      encrypted: true
+			    });
+
+				var channel = {};
+
+				channel.admin = pusher.subscribe('admin');
+				channel.user = pusher.subscribe('user.' + $scope.user.id);					
+				
+			    channel.user.bindings = [
+				    channel.user.bind('App\\Events\\PusherTaskCreated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' created a new task.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherSpreadsheetCreated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' created a new sheet.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskAssignedToDesigner', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' assigned a task for ' + data.data.name + '.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherDesignerTaskStart', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' started to work on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskDeleted', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' deleted a task.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherDesignerTaskDecline', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' declined to work on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				     channel.user.bind('App\\Events\\PusherForQC', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' submitted a task for quality control.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherQualityControlTaskStart', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' started to work on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherMarkAsComplete', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' marked ' + data.data.file_name + ' as complete.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskRework', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' marked ' + data.data.file_name + ' as rework.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherNotifyComment', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' commented on a task on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+				    	$scope.$broadcast('refresh');
+				    }),
+			    ];
+			})
+	}]);
+sharedModule
 	.controller('sheetsContentContainerController', ['$scope', '$filter', '$state', 'Preloader', 'Spreadsheet', function($scope, $filter, $state, Preloader, Spreadsheet){
 		$scope.toolbar = {};
 
@@ -248,12 +587,19 @@ sharedModule
 		$scope.init();
 	}]);
 sharedModule	
-	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'QualityControlAssigned', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, QualityControlAssigned){
+	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'DesignerRework', 'QualityControlAssigned', 'QualityControlRework', 'Comment', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, DesignerRework, QualityControlAssigned, QualityControlRework, Comment){
 		var taskID = $stateParams.taskID;
 
 		$scope.toolbar = {};
 
 		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.comment = {};
+		$scope.comment.task_id = taskID;
+
+		$scope.$on('refresh', function(){
+			$scope.init();
+		});
 
 		/* Designer actions */
 		// check the user if he has pending works before executing this
@@ -261,15 +607,17 @@ sharedModule
 		{
 			var dialog = {
 				'title': 'Start',
-				'message': 'Start on working this task?',
+				'message': 'Start working on this task?',
 				'ok': 'start',
 				'cancel': 'cancel',
 			};
 
 			Preloader.confirm(dialog)
 				.then(function(){
+					Preloader.preload();
 					DesignerAssigned.start($scope.task)
 						.success(function(data){
+							Preloader.stop();
 							$scope.init();
 						})
 						.error(function(){
@@ -316,6 +664,31 @@ sharedModule
 				.then(function(){
 					Preloader.preload();
 					DesignerAssigned.forQC($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.revision = function()
+		{
+			var dialog = {
+				'title': 'Revise',
+				'message': 'Start revising this task?',
+				'ok': 'Revise',
+				'cancel': 'Cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					DesignerRework.revise($scope.task)
 						.success(function(data){
 							Preloader.stop();
 							$scope.init();
@@ -386,6 +759,119 @@ sharedModule
 				})
 		}
 
+		$scope.startQC = function()
+		{
+			var dialog = {
+				'title': 'Start',
+				'message': 'Start working on this task?',
+				'ok': 'start',
+				'cancel': 'cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					QualityControlAssigned.store($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.complete = function()
+		{
+			var dialog = {
+				'title': 'Complete',
+				'message': 'Mark this task as complete?',
+				'ok': 'complete',
+				'cancel': 'cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					QualityControlAssigned.complete($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.rework = function()
+		{
+			var dialog = {
+				'title': 'Rework',
+				'placeholder': 'Comment',
+				'message': 'Tell ' + $scope.task.designer_assigned.designer.name + ' how can he improve his work.',
+				'ok': 'comment',
+				'cancel': 'cancel',
+			};
+
+			Preloader.prompt(dialog)
+				.then(function(message){
+					if(!message){
+						return;
+					}
+
+					Preloader.preload();
+
+					var comment = {};
+					comment.task_id = taskID;
+					comment.message = message;
+
+					Comment.store(comment)
+						.success(function(){
+							if(!$scope.task.quality_control_assigned.time_end)
+							{
+								QualityControlAssigned.rework($scope.task)
+									.success(function(data){
+										Preloader.stop();
+										$scope.init();
+									})
+									.error(function(){
+										Preloader.error();
+									})
+							}
+
+						})
+						.error(function(){
+							Preloader.error();
+						});
+
+				}, function(){
+					return;
+				})
+		}
+
+
+		$scope.submit = function(){
+			if($scope.comment.message)
+			{
+				$scope.busy = true;
+				Comment.store($scope.comment)
+					.success(function(data){
+						$scope.comment.message = null;
+						$scope.init();
+					})
+					.error(function(){
+						$scope.busy = false;
+						Preloader.error();
+					})
+			}
+		}
+
 		$scope.init = function(){
 			var query = {
 				'withTrashed': true,
@@ -418,6 +904,30 @@ sharedModule
 							},
 						]
 					},
+					{
+						'relation': 'reworks',
+						'withTrashed': false,
+						'with': [
+							{
+								'relation' : 'designer',
+								'withTrashed': true,
+							},
+							{
+								'relation' : 'quality_control',
+								'withTrashed': true,
+							},
+						]
+					},
+					{
+						'relation' : 'comments',
+						'withTrashed': false,
+						'with': [
+							{
+								'relation': 'user',
+								'withTrashed': true,
+							}
+						]
+					},
 				],
 				'where': [
 					{
@@ -441,9 +951,9 @@ sharedModule
 						data.designer_assigned.time_start = data.designer_assigned.time_start ? new Date(data.designer_assigned.time_start) : null;
 						data.designer_assigned.time_end = data.designer_assigned.time_end ? new Date(data.designer_assigned.time_end) : null;
 					}
-					if(data.quality_control)
+					if(data.quality_control_assigned)
 					{
-						if(data.designer_assigned.designer.id != $scope.user.id && $scope.user.role == 'designer')
+						if(data.quality_control_assigned.quality_control.id != $scope.user.id && $scope.user.role == 'quality_control')
 						{
 							$scope.unauthorized = true;
 						}
@@ -451,7 +961,16 @@ sharedModule
 						data.quality_control_assigned.time_end = data.quality_control_assigned.time_end ? new Date(data.quality_control_assigned.time_end) : null;
 					}
 
+					if(data.comments.length)
+					{
+						angular.forEach(data.comments, function(comment){
+							comment.first_letter = comment.user.name.charAt(0).toUpperCase();
+							comment.created_at = new Date(comment.created_at);
+						});
+					}
+
 					$scope.task = data;
+					$scope.busy = false;
 					$scope.task.first_letter = data.file_name.charAt(0).toUpperCase();
 					$scope.task.category = data.category.name;
 					$scope.task.client = data.client.name;
@@ -473,6 +992,10 @@ sharedModule
 			return results;
 		}
 		$scope.toolbar.searchAll = true;
+
+		$scope.$on('refresh', function(){
+			$scope.init($scope.subheader.current.request);
+		});
 		/**
 		 * Reveals the search bar.
 		 *
@@ -1289,6 +1812,31 @@ sharedModule
 		}
 	}]);
 sharedModule
+	.factory('DesignerRework', ['$http', function($http){
+		var urlBase = '/designer-rework';
+
+		return {
+			index: function(){
+				return $http.get(urlBase);
+			},
+			show: function(id){
+				return $http.get(urlBase + '/' +id);
+			},
+			store: function(data){
+				return $http.post(urlBase, data);
+			},
+			update: function(id, data){
+				return $http.put(urlBase + '/' + id, data);
+			},
+			delete: function(id){
+				return $http.delete(urlBase + '/' + id);
+			},
+			start: function(data){
+				return $http.post(urlBase + '/revise', data);
+			},
+		}
+	}]);
+sharedModule
 	.factory('Notification', ['$http', function($http){
 		var urlBase = '/notification';
 
@@ -1319,6 +1867,34 @@ sharedModule
 sharedModule
 	.factory('QualityControlAssigned', ['$http', function($http){
 		var urlBase = '/quality-control-assigned';
+
+		return {
+			index: function(){
+				return $http.get(urlBase);
+			},
+			show: function(id){
+				return $http.get(urlBase + '/' +id);
+			},
+			store: function(data){
+				return $http.post(urlBase, data);
+			},
+			update: function(id, data){
+				return $http.put(urlBase + '/' + id, data);
+			},
+			delete: function(id){
+				return $http.delete(urlBase + '/' + id);
+			},
+			complete: function(data){
+				return $http.post(urlBase + '/complete', data);
+			},
+			rework: function(data){
+				return $http.post(urlBase + '/rework', data);
+			},
+		}
+	}]);
+sharedModule
+	.factory('QualityControlRework', ['$http', function($http){
+		var urlBase = '/quality-control-rework';
 
 		return {
 			index: function(){
@@ -1513,6 +2089,18 @@ sharedModule
 		var dataHolder = null;
 
 		return {
+			prompt: function(data)
+			{
+				var prompt = $mdDialog.prompt()
+			    	.title(data.title)
+			      	.textContent(data.message)
+			      	.placeholder(data.placeholder)
+			      	.ariaLabel(data.title)
+			      	.ok(data.ok)
+			      	.cancel(data.cancel);
+
+			    return $mdDialog.show(prompt);
+			},
 			confirm: function(data)
 			{
 				var confirm = $mdDialog.confirm()
@@ -1650,6 +2238,14 @@ sharedModule
 		}
 	}]);
 sharedModule
+	.controller('itemActionsBottomSheetController', ['$scope', '$mdBottomSheet', 'Preloader', function($scope, $mdBottomSheet, Preloader){
+		$scope.type = Preloader.get();
+
+		$scope.action = function(idx){
+			$mdBottomSheet.hide(idx);
+		}
+	}]);
+sharedModule
 	.controller('assignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
 		$scope.tasks = Preloader.get();
 		$scope.busy = false;
@@ -1701,6 +2297,267 @@ sharedModule
 						Preloader.error();
 					});
 			}
+		}
+	}]);
+sharedModule
+	.controller('createCategoriesDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', function($scope, $mdDialog, Preloader, Category){
+		var urlBase = 'category';
+		$scope.category = {};
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.category)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.categoryForm.$invalid){
+				angular.forEach($scope.categoryForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				Category.store($scope.category)
+					.success(function(duplicate){
+						if(duplicate){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('createClientsDialogController', ['$scope', '$mdDialog', 'Preloader', 'Client', function($scope, $mdDialog, Preloader, Client){
+		var urlBase = 'client';
+		$scope.client = {};
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.client)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.clientForm.$invalid){
+				angular.forEach($scope.clientForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				Client.store($scope.client)
+					.success(function(duplicate){
+						if(duplicate){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('createTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', 'Client', 'Task', function($scope, $mdDialog, Preloader, Category, Client, Task){
+		var urlBase = 'task';
+		$scope.task = {};
+		$scope.task.delivery_date = new Date();
+		$scope.task.live_date = new Date();
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		Category.index()
+			.success(function(data){
+				$scope.categories = data;
+			})
+
+		Client.index()
+			.success(function(data){
+				$scope.clients = data;
+			})
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.task)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.taskForm.$invalid){
+				angular.forEach($scope.taskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				
+				$scope.task.delivery_date = $scope.task.delivery_date.toDateString();
+				$scope.task.live_date = $scope.task.live_date.toDateString();
+
+				Task.store($scope.task)
+					.success(function(data){
+						if(typeof data === 'boolean'){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop(data);
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('editCategoriesDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', function($scope, $mdDialog, Preloader, Category){
+		var urlBase = 'category';
+		
+		Category.show(Preloader.get().id)
+			.success(function(data){
+				$scope.category = data;
+				$scope.label = data.name;
+			})
+
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.category)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.categoryForm.$invalid){
+				angular.forEach($scope.categoryForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				Category.update($scope.category.id, $scope.category)
+					.success(function(duplicate){
+						if(duplicate){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('editClientsDialogController', ['$scope', '$mdDialog', 'Preloader', 'Client', function($scope, $mdDialog, Preloader, Client){
+		var urlBase = 'client';
+		
+		Client.show(Preloader.get().id)
+			.success(function(data){
+				$scope.client = data;
+				$scope.label = data.name;
+			})
+
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.client)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.clientForm.$invalid){
+				angular.forEach($scope.clientForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				Client.update($scope.client.id, $scope.client)
+					.success(function(duplicate){
+						if(duplicate){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('itemActionsDialogController', ['$scope', '$mdDialog', 'Preloader', function($scope, $mdDialog, Preloader){
+		$scope.type = Preloader.get();
+
+		$scope.action = function(idx){
+			$mdDialog.hide(idx);
 		}
 	}]);
 sharedModule

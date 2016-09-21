@@ -1,0 +1,1 @@
+var qualityControlModule = angular.module('quality_control', ['sharedModule']);

@@ -1,10 +1,17 @@
 sharedModule	
-	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'QualityControlAssigned', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, QualityControlAssigned){
+	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'DesignerRework', 'QualityControlAssigned', 'QualityControlRework', 'Comment', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, DesignerRework, QualityControlAssigned, QualityControlRework, Comment){
 		var taskID = $stateParams.taskID;
 
 		$scope.toolbar = {};
 
 		$scope.toolbar.hideSearchIcon = true;
+
+		$scope.comment = {};
+		$scope.comment.task_id = taskID;
+
+		$scope.$on('refresh', function(){
+			$scope.init();
+		});
 
 		/* Designer actions */
 		// check the user if he has pending works before executing this
@@ -12,15 +19,17 @@ sharedModule
 		{
 			var dialog = {
 				'title': 'Start',
-				'message': 'Start on working this task?',
+				'message': 'Start working on this task?',
 				'ok': 'start',
 				'cancel': 'cancel',
 			};
 
 			Preloader.confirm(dialog)
 				.then(function(){
+					Preloader.preload();
 					DesignerAssigned.start($scope.task)
 						.success(function(data){
+							Preloader.stop();
 							$scope.init();
 						})
 						.error(function(){
@@ -67,6 +76,31 @@ sharedModule
 				.then(function(){
 					Preloader.preload();
 					DesignerAssigned.forQC($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.revision = function()
+		{
+			var dialog = {
+				'title': 'Revise',
+				'message': 'Start revising this task?',
+				'ok': 'Revise',
+				'cancel': 'Cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					DesignerRework.revise($scope.task)
 						.success(function(data){
 							Preloader.stop();
 							$scope.init();
@@ -137,6 +171,119 @@ sharedModule
 				})
 		}
 
+		$scope.startQC = function()
+		{
+			var dialog = {
+				'title': 'Start',
+				'message': 'Start working on this task?',
+				'ok': 'start',
+				'cancel': 'cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					QualityControlAssigned.store($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.complete = function()
+		{
+			var dialog = {
+				'title': 'Complete',
+				'message': 'Mark this task as complete?',
+				'ok': 'complete',
+				'cancel': 'cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					QualityControlAssigned.complete($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.rework = function()
+		{
+			var dialog = {
+				'title': 'Rework',
+				'placeholder': 'Comment',
+				'message': 'Tell ' + $scope.task.designer_assigned.designer.name + ' how can he improve his work.',
+				'ok': 'comment',
+				'cancel': 'cancel',
+			};
+
+			Preloader.prompt(dialog)
+				.then(function(message){
+					if(!message){
+						return;
+					}
+
+					Preloader.preload();
+
+					var comment = {};
+					comment.task_id = taskID;
+					comment.message = message;
+
+					Comment.store(comment)
+						.success(function(){
+							if(!$scope.task.quality_control_assigned.time_end)
+							{
+								QualityControlAssigned.rework($scope.task)
+									.success(function(data){
+										Preloader.stop();
+										$scope.init();
+									})
+									.error(function(){
+										Preloader.error();
+									})
+							}
+
+						})
+						.error(function(){
+							Preloader.error();
+						});
+
+				}, function(){
+					return;
+				})
+		}
+
+
+		$scope.submit = function(){
+			if($scope.comment.message)
+			{
+				$scope.busy = true;
+				Comment.store($scope.comment)
+					.success(function(data){
+						$scope.comment.message = null;
+						$scope.init();
+					})
+					.error(function(){
+						$scope.busy = false;
+						Preloader.error();
+					})
+			}
+		}
+
 		$scope.init = function(){
 			var query = {
 				'withTrashed': true,
@@ -169,6 +316,30 @@ sharedModule
 							},
 						]
 					},
+					{
+						'relation': 'reworks',
+						'withTrashed': false,
+						'with': [
+							{
+								'relation' : 'designer',
+								'withTrashed': true,
+							},
+							{
+								'relation' : 'quality_control',
+								'withTrashed': true,
+							},
+						]
+					},
+					{
+						'relation' : 'comments',
+						'withTrashed': false,
+						'with': [
+							{
+								'relation': 'user',
+								'withTrashed': true,
+							}
+						]
+					},
 				],
 				'where': [
 					{
@@ -192,9 +363,9 @@ sharedModule
 						data.designer_assigned.time_start = data.designer_assigned.time_start ? new Date(data.designer_assigned.time_start) : null;
 						data.designer_assigned.time_end = data.designer_assigned.time_end ? new Date(data.designer_assigned.time_end) : null;
 					}
-					if(data.quality_control)
+					if(data.quality_control_assigned)
 					{
-						if(data.designer_assigned.designer.id != $scope.user.id && $scope.user.role == 'designer')
+						if(data.quality_control_assigned.quality_control.id != $scope.user.id && $scope.user.role == 'quality_control')
 						{
 							$scope.unauthorized = true;
 						}
@@ -202,7 +373,16 @@ sharedModule
 						data.quality_control_assigned.time_end = data.quality_control_assigned.time_end ? new Date(data.quality_control_assigned.time_end) : null;
 					}
 
+					if(data.comments.length)
+					{
+						angular.forEach(data.comments, function(comment){
+							comment.first_letter = comment.user.name.charAt(0).toUpperCase();
+							comment.created_at = new Date(comment.created_at);
+						});
+					}
+
 					$scope.task = data;
+					$scope.busy = false;
 					$scope.task.first_letter = data.file_name.charAt(0).toUpperCase();
 					$scope.task.category = data.category.name;
 					$scope.task.client = data.client.name;
