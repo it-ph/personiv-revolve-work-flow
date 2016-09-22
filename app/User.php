@@ -31,13 +31,28 @@ class User extends Authenticatable
         'password', 'remember_token',
     ];
 
-    public function assignment()
-    {
-        return $this->hasMany('App\Assignment');
-    }
-
     public function comments()
     {
         return $this->hasMany('App\Comment');
+    }
+
+    public function designer_assigned()
+    {
+        return $this->hasMany('App\DesignerAssigned', 'designer_id');
+    }
+
+    public function quality_control_assigned()
+    {
+        return $this->hasMany('App\QualityControlAssigned', 'quality_control_id');
+    }
+
+    public function designer_rework()
+    {
+        return $this->hasMany('App\Rework', 'designer_id');
+    }
+
+    public function quality_control_rework()
+    {
+        return $this->hasMany('App\Rework', 'quality_control_id');
     }
 }

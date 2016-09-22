@@ -102,6 +102,19 @@ designerModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\NotifyDesignerForTaskRework'){
+					notif.message = 'marked your task ' + notif.data.attachment.file_name + ' as rework.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -156,6 +169,13 @@ designerModule
 				    channel.user.bind('App\\Events\\PusherNotifyComment', function(data) {
 				    	fetchUnreadNotifications();
 				    	var message = data.sender.name + ' commented on your task on ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+				    	$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherNotifyDesignerForTaskRework', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' marked your task ' + data.data.file_name + ' as rework.';
 				    	Preloader.newNotification(message);
 				    	$scope.$broadcast('refresh');
 				    }),

@@ -13,7 +13,7 @@ sharedModule
 				'label': 'Dashboard',
 			},
 			{
-				'state': 'main.sheets',
+				'state': 'main.upload',
 				'icon': 'mdi-file-excel',
 				'label': 'Sheets',
 			},
@@ -215,6 +215,19 @@ sharedModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\DesignerRevisionStart'){
+					notif.message = 'started to revise ' + notif.data.attachment.task.file_name + '.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+							})
+					}
+				}
 			});
 
 			return data;
@@ -327,6 +340,13 @@ sharedModule
 				    	var message = data.sender.name + ' commented on a task on ' + data.data.file_name + '.';
 				    	Preloader.newNotification(message);
 				    	$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherDesignerRevisionStart', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' started to revise ' + data.data.file_name + '.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
 				    }),
 			    ];
 			})

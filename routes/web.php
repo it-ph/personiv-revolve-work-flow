@@ -48,6 +48,7 @@ Route::group(['prefix' => 'user'], function(){
 	Route::post('designers/paginate', 'UserController@designersPaginate');
 	Route::post('quality_control/paginate', 'UserController@qualityControlPaginate');
 	Route::post('enlist', 'UserController@enlist');
+	Route::post('pending', 'UserController@pending');
 });
 
 /* Category Routes */
@@ -92,6 +93,17 @@ Route::group(['prefix' => 'quality-control-assigned'], function(){
 	Route::post('complete', 'QualityControlAssignedController@complete');
 	Route::post('rework', 'QualityControlAssignedController@rework');
 });
+
+/* Rework Routes */
+Route::group(['prefix' => 'rework'], function(){
+	Route::post('revise', 'ReworkController@revise');
+	Route::post('for-qc', 'ReworkController@forQC');
+	Route::post('start-qc', 'ReworkController@startQC');
+	Route::post('complete', 'ReworkController@complete');
+	Route::post('pass', 'ReworkController@pass');
+	Route::post('rework', 'ReworkController@rework');
+});
+
 
 /* Notification Routes */
 Route::group(['prefix' => 'notification'], function(){

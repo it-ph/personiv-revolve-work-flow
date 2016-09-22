@@ -18,5 +18,23 @@ sharedModule
 			delete: function(id){
 				return $http.delete(urlBase + '/' + id);
 			},
+			revise: function(data){
+				return $http.post(urlBase + '/revise', data);
+			},
+			forQC: function(data){
+				return $http.post(urlBase + '/for-qc', data);
+			},
+			startQC: function(data){
+				return $http.post(urlBase + '/start-qc', data);
+			},
+			complete: function(data){
+				return $http.post(urlBase + '/complete', data);
+			},
+			pass: function(data){
+				return $http.post(urlBase + '/pass', data);
+			},
+			rework: function(data){
+				return $http.post(urlBase + '/rework', data);
+			},
 		}
 	}]);

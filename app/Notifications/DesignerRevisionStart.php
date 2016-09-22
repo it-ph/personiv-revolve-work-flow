@@ -1,12 +1,13 @@
 <?php
 
 namespace App\Notifications;
+use App\Rework;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Notifications\Messages\MailMessage;
 
-class DesignerTaskDecline extends Notification
+class DesignerRevisionStart extends Notification
 {
     use Queueable;
 
@@ -15,9 +16,9 @@ class DesignerTaskDecline extends Notification
      *
      * @return void
      */
-    public function __construct($designer_assigned, $sender)
+    public function __construct(Rework $rework, $sender)
     {
-        $this->designer_assigned = $designer_assigned;
+        $this->rework = $rework;
         $this->sender = $sender;
     }
 
@@ -55,7 +56,7 @@ class DesignerTaskDecline extends Notification
     public function toArray($notifiable)
     {
         return [
-            'attachment' => $this->designer_assigned,
+            'attachment' => $this->rework,
             'sender' => $this->sender,
         ];
     }

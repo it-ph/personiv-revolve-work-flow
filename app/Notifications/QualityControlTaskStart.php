@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Notifications;
-use App\QualityControlAssigned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -16,7 +15,7 @@ class QualityControlTaskStart extends Notification
      *
      * @return void
      */
-    public function __construct(QualityControlAssigned $quality_control_assigned, $sender)
+    public function __construct($quality_control_assigned, $sender)
     {
         $this->quality_control_assigned = $quality_control_assigned;
         $this->sender = $sender;

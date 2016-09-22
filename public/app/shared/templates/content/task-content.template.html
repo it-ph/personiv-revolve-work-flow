@@ -1,5 +1,5 @@
 <div layout="row" layout-align="center center" flex layout-padding> 
-    <md-card flex flex-gt-lg="80" ng-if="!unauthorized">
+    <md-card flex flex-gt-lg="80" ng-if="(!unauthorized && !task.reworks.length) || (user.role=='designer' && task.reworks.length && user.id == authorized_designer_id) || (user.role=='quality_control' && task.reworks.length && user.id == authorized_quality_control_id) || user.role =='admin'">
         <md-card-header>
             <md-card-avatar class="circle primary-bg" layout="row" layout-align="center center">
                 <span class="md-headline white-text">{{ task.first_letter }}</span>
@@ -55,8 +55,8 @@
         <md-divider></md-divider>
         <md-card-title ng-if="task.reworks.length">
             <md-card-title-text>
-                <span class="md-headline primary-text">
-                    <span>Revisions</span>
+                <span class="md-headline accent-text">
+                    <span>Revision<span ng-if="task.reworks.length > 1">s</span></span>
                 </span>
             </md-card-title-text>
         </md-card-title>
@@ -73,7 +73,7 @@
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer.name }} <span ng-if="!rework.designer.name">N/A</span></td>
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.designer_time_start">N/A</span></td>
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.designer_time_end">N/A</span></td>
-                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_minutes_spent}} <span ng-if="!task.designer_assigned.designer_minutes_spent">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.designer_minutes_spent}} <span ng-if="!rework.designer_minutes_spent">N/A</span></td>
                     </tr>
                 </table>
                 <table class="table">
@@ -87,13 +87,13 @@
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control.name }} <span ng-if="!rework.quality_control.name">N/A</span></td>
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_time_start | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.quality_control_time_start">N/A</span></td>
                         <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_time_end | date: 'MMM dd, yyyy, hh:mma'}} <span ng-if="!rework.quality_control_time_end">N/A</span></td>
-                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_minutes_spent}} <span ng-if="!task.designer_assigned.quality_control_minutes_spent">N/A</span></td>
+                        <td class="col-xs-3 col-sm-3 col-md-3 col-lg-3">{{ rework.quality_control_minutes_spent}} <span ng-if="!rework.quality_control_minutes_spent">N/A</span></td>
                     </tr>
                 </table>
             </div>
         </md-card-content>
         <md-divider ng-if="!task.deleted_at"></md-divider>
-        <md-card-actions layout="row" layout-align="start center" ng-if="!task.deleted_at">
+        <md-card-actions layout="row" layout-align="start center" ng-if="!task.deleted_at && !hasPending">
             <div ng-if="task.status == 'pending' && user.role == 'designer'">
                 <md-button aria-label="Start Design" ng-click="start()">
                     Design Start
@@ -117,16 +117,16 @@
                 <md-button aria-label="For QC" ng-click="forQC()" ng-if="!task.quality_control_assigned">
                     For QC
                 </md-button>
-                <md-button aria-label="For QC" ng-click="forQC()" ng-if="task.rework">
-                    Revised For QC
+                <md-button aria-label="For QC" ng-click="forQC()" ng-if="task.reworks.length && !under_qc">
+                    For QC Revised
                 </md-button>
             </div>
             <div ng-if="task.status == 'for_qc' && user.role != 'designer'">
                 <md-button aria-label="Start QC" ng-click="startQC()">
-                    QC Start
+                    QC Start <span ng-if="task.reworks.length">Revised</span>
                 </md-button>
             </div>
-            <div ng-if="task.status == 'in_progress' && user.role != 'designer' && task.quality_control_assigned">
+            <div ng-if="task.status == 'in_progress' && user.role != 'designer' && task.quality_control_assigned && !under_revision">
                 <md-button aria-label="Rework" ng-click="rework()">
                     Rework
                 </md-button>
@@ -134,7 +134,7 @@
                     Complete
                 </md-button>
             </div>
-            <div ng-if="task.status == 'rework' && user.role == 'designer'">
+            <div ng-if="task.status == 'rework' && user.role == 'designer' && task.reworks.length && authorized_designer_id == user.id">
                 <md-button aria-label="Revision Start" ng-click="revision()">
                     Revision Start
                 </md-button>
@@ -142,7 +142,16 @@
                     Pass
                 </md-button>
             </div>
+            <div ng-if="task.status == 'rework' && user.role != 'designer' && task.reworks[task.reworks.length-1].quality_control_time_end">
+                <md-button aria-label="Reassign" ng-click="reassign()">
+                    Assign Revision
+                </md-button>
+            </div>
         </md-card-actions>
+        <p ng-if="hasPending">
+            <md-button ui-sref="main.task({taskID:current})">Current Task</md-button>
+            <span class="md-caption secondary-text">*You have an on going task.</span>
+        </p>
         <div ng-if="task.comments.length">
             <md-divider></md-divider>
             <md-subheader class="md-no-sticky">Comments</md-subheader>
@@ -174,7 +183,7 @@
             </form>
         </div>
     </md-card>
-    <md-content flex layout-margin ng-if="unauthorized">
+    <md-content flex layout-margin ng-if="(unauthorized && !task.reworks.length) || (user.role=='designer' && task.reworks.length && user.id != authorized_designer_id) || (user.role=='quality_control' && task.reworks.length && user.id != authorized_quality_control_id)">
         <h1 hide-sm hide-md show-gt-md class="md-display-4 primary-text">Forbidden</h1>
         <p>Sorry, but you are not authorized to view this page.</p>
         <p>It looks like this was the result of either:</p>

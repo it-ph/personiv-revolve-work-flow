@@ -1,5 +1,5 @@
 sharedModule	
-	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'DesignerRework', 'QualityControlAssigned', 'QualityControlRework', 'Comment', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, DesignerRework, QualityControlAssigned, QualityControlRework, Comment){
+	.controller('taskContentContainerController', ['$scope', '$mdDialog', '$state', '$stateParams', 'Preloader', 'Task', 'DesignerAssigned', 'Rework', 'QualityControlAssigned', 'Comment', 'User', function($scope, $mdDialog, $state, $stateParams, Preloader, Task, DesignerAssigned, Rework, QualityControlAssigned, Comment, User){
 		var taskID = $stateParams.taskID;
 
 		$scope.toolbar = {};
@@ -66,23 +66,43 @@ sharedModule
 		$scope.forQC = function()
 		{
 			var dialog = {
-				'title': 'For QC',
 				'message': 'Submit task for quality control?',
 				'ok': 'Continue',
 				'cancel': 'Cancel',
 			};
 
+			if(!$scope.task.reworks.length)
+			{
+				dialog.title = 'For QC';
+			}
+			else {
+				dialog.title = 'For QC Revised';
+			}
+
 			Preloader.confirm(dialog)
 				.then(function(){
 					Preloader.preload();
-					DesignerAssigned.forQC($scope.task)
-						.success(function(data){
-							Preloader.stop();
-							$scope.init();
-						})
-						.error(function(){
-							Preloader.error();
-						})
+					if(!$scope.task.reworks.length)
+					{
+						DesignerAssigned.forQC($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
+					else{
+						Rework.forQC($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
 				}, function(){
 					return;
 				})
@@ -100,10 +120,35 @@ sharedModule
 			Preloader.confirm(dialog)
 				.then(function(){
 					Preloader.preload();
-					DesignerRework.revise($scope.task)
+					Rework.revise($scope.task)
 						.success(function(data){
 							Preloader.stop();
 							$scope.init();
+						})
+						.error(function(){
+							Preloader.error();
+						})
+				}, function(){
+					return;
+				})
+		}
+
+		$scope.pass = function()
+		{
+			var dialog = {
+				'title': 'Pass',
+				'message': 'Have other people continue this revision?',
+				'ok': 'Pass',
+				'cancel': 'Cancel',
+			};
+
+			Preloader.confirm(dialog)
+				.then(function(){
+					Preloader.preload();
+					Rework.pass($scope.task)
+						.success(function(data){
+							Preloader.stop();
+							$state.go('main.tracker');
 						})
 						.error(function(){
 							Preloader.error();
@@ -183,14 +228,27 @@ sharedModule
 			Preloader.confirm(dialog)
 				.then(function(){
 					Preloader.preload();
-					QualityControlAssigned.store($scope.task)
-						.success(function(data){
-							Preloader.stop();
-							$scope.init();
-						})
-						.error(function(){
-							Preloader.error();
-						})
+					if(!$scope.task.reworks.length)
+					{
+						QualityControlAssigned.store($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
+					else{
+						Rework.startQC($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
 				}, function(){
 					return;
 				})
@@ -208,14 +266,27 @@ sharedModule
 			Preloader.confirm(dialog)
 				.then(function(){
 					Preloader.preload();
-					QualityControlAssigned.complete($scope.task)
-						.success(function(data){
-							Preloader.stop();
-							$scope.init();
-						})
-						.error(function(){
-							Preloader.error();
-						})
+					if(!$scope.task.reworks.length)
+					{
+						QualityControlAssigned.complete($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
+					else{
+						Rework.complete($scope.task)
+							.success(function(data){
+								Preloader.stop();
+								$scope.init();
+							})
+							.error(function(){
+								Preloader.error();
+							})
+					}
 				}, function(){
 					return;
 				})
@@ -242,12 +313,26 @@ sharedModule
 					var comment = {};
 					comment.task_id = taskID;
 					comment.message = message;
+					if($scope.task.quality_control_assigned.time_end)
+					{
+						comment.rework = true;
+					}
 
 					Comment.store(comment)
 						.success(function(){
 							if(!$scope.task.quality_control_assigned.time_end)
 							{
 								QualityControlAssigned.rework($scope.task)
+									.success(function(data){
+										Preloader.stop();
+										$scope.init();
+									})
+									.error(function(){
+										Preloader.error();
+									})
+							}
+							else{
+								Rework.rework($scope.task)
 									.success(function(data){
 										Preloader.stop();
 										$scope.init();
@@ -272,9 +357,14 @@ sharedModule
 			if($scope.comment.message)
 			{
 				$scope.busy = true;
+				if($scope.task.quality_control_assigned.time_end)
+				{
+					$scope.comment.rework = true;
+				}
 				Comment.store($scope.comment)
 					.success(function(data){
 						$scope.comment.message = null;
+						$scope.comment.rework = false;
 						$scope.init();
 					})
 					.error(function(){
@@ -350,6 +440,18 @@ sharedModule
 				],
 			};
 
+			User.pending()
+				.success(function(data){
+					if(!data)
+					{
+						$scope.hasPending = false;	
+					}
+					else{
+						$scope.current = data;
+						$scope.hasPending = data == taskID ? false: true;
+					}
+				})
+
 			Task.enlist(query)
 				.success(function(data){
 					$scope.unauthorized = false;
@@ -381,12 +483,33 @@ sharedModule
 						});
 					}
 
+					if(data.reworks.length)
+					{
+						$scope.under_qc = false;
+						$scope.under_revision = false;
+						angular.forEach(data.reworks, function(rework){
+							rework.designer_time_start =  rework.designer_time_start ? new Date(rework.designer_time_start) : null;
+							rework.designer_time_end =  rework.designer_time_end ? new Date(rework.designer_time_end) : null;
+							rework.quality_control_time_start =  rework.quality_control_time_start ? new Date(rework.quality_control_time_start) : null;
+							rework.quality_control_time_end =  rework.quality_control_time_end ? new Date(rework.quality_control_time_end) : null;
+
+							$scope.under_revision = rework.designer_time_start && !rework.designer_time_end ? true : false;
+							$scope.under_qc = rework.quality_control_time_start && !rework.quality_control_time_end ? true : false;							
+						});
+
+						$scope.authorized_designer_id = data.reworks[data.reworks.length-1].designer_id ? data.reworks[data.reworks.length-1].designer_id : $scope.user.id;
+						$scope.authorized_quality_control_id = data.reworks[data.reworks.length-1].quality_control_id ? data.reworks[data.reworks.length-1].quality_control_id : $scope.user.id;
+					}
+
 					$scope.task = data;
 					$scope.busy = false;
 					$scope.task.first_letter = data.file_name.charAt(0).toUpperCase();
 					$scope.task.category = data.category.name;
 					$scope.task.client = data.client.name;
 					$scope.toolbar.childState = data.file_name;
+				})
+				.error(function(){
+					Preloader.error();
 				})
 		}
 

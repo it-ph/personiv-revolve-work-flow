@@ -1,7 +1,6 @@
 <?php
 
 namespace App\Notifications;
-use App\DesignerAssigned;
 use Illuminate\Bus\Queueable;
 use Illuminate\Notifications\Notification;
 use Illuminate\Contracts\Queue\ShouldQueue;
@@ -19,7 +18,7 @@ class TaskAssignedToDesigner extends Notification
      *
      * @return void
      */
-    public function __construct(DesignerAssigned $designer_assigned, $sender)
+    public function __construct($designer_assigned, $sender)
     {
         $this->designer_assigned = $designer_assigned;
         $this->sender = $sender;

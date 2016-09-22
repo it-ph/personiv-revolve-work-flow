@@ -6,12 +6,6 @@ sharedModule
 		$scope.toolbar.items = [];
 		$scope.toolbar.childState = 'Upload Sheet';
 
-		$scope.toolbar.back = function(){
-			$state.go('main.sheets');
-		}
-
-		$scope.toolbar.showBack = true;
-
 		$scope.toolbar.getItems = function(query){
 			$scope.showInactive = true;
 			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
@@ -231,7 +225,7 @@ sharedModule
 						}
 
 						Preloader.stop();
-						$scope.toolbar.back();
+						$state.go('main.tracker');
 					})
 					.error(function(){
 						Preloader.error()

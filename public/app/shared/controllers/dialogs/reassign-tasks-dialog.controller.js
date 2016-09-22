@@ -1,5 +1,5 @@
 sharedModule
-	.controller('reassignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', function($scope, $mdDialog, Preloader, User, DesignerAssigned){
+	.controller('reassignTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'User', 'DesignerAssigned', 'Rework', function($scope, $mdDialog, Preloader, User, DesignerAssigned, Rework){
 		$scope.task = Preloader.get();
 		$scope.designer = $scope.task.designer_assigned.designer.id;
 		$scope.busy = false;
@@ -39,13 +39,25 @@ sharedModule
 			}
 			if(!$scope.busy){
 				$scope.busy = true;
-				DesignerAssigned.update($scope.task.id, $scope.task)
-					.success(function(){
-						Preloader.stop();
-					})
-					.error(function(){
-						Preloader.error();
-					});
+				if($scope.task.status != 'rework')
+				{
+					DesignerAssigned.update($scope.task.id, $scope.task)
+						.success(function(){
+							Preloader.stop();
+						})
+						.error(function(){
+							Preloader.error();
+						});
+				}
+				else{
+					Rework.store($scope.task)
+						.success(function(){
+							Preloader.stop();
+						})
+						.error(function(){
+							Preloader.error();
+						});	
+				}
 			}
 		}
 	}]);

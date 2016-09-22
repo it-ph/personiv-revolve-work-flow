@@ -14,8 +14,57 @@ class UserController extends Controller
 {
     public function __construct()
     {
-        $this->middleware('role:quality_control,admin')->except('enlist', 'changePassword', 'checkPassword', 'logout', 'check');
+        // $this->middleware('role:quality_control,admin')->except('enlist', 'changePassword', 'checkPassword', 'logout', 'check', 'pending');
     }
+
+    /**
+     * Check for current activities of the user.
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function pending()
+    {
+        $user = Auth::user();
+
+        if($user->role == 'admin' || $user->role == 'quality_control')
+        {
+            $user->load('quality_control_assigned', 'quality_control_rework');
+            
+            foreach ($user->quality_control_assigned as $quality_control_assigned) {
+                if($quality_control_assigned->time_start && !$quality_control_assigned->time_end)
+                {
+                    return response()->json($quality_control_assigned->task_id);
+                }
+            }
+
+            foreach ($user->quality_control_rework as $quality_control_rework) {
+                if($quality_control_rework->time_start && !$quality_control_rework->time_end)
+                {
+                    return response()->json($quality_control_assigned->task_id);
+                }
+            }
+
+            return response()->json(false);
+        }
+        
+        $user->load('designer_assigned', 'designer_rework');
+
+        foreach ($user->designer_assigned as $designer_assigned) {
+            if($designer_assigned->time_start && !$designer_assigned->time_end)
+            {
+                return response()->json($designer_assigned->task_id);
+            }
+        }
+
+        foreach ($user->designer_rework as $designer_rework) {
+            if($designer_rework->time_start && !$designer_rework->time_end)
+            {
+                return response()->json($designer_assigned->task_id);
+            }
+        }
+    }
+
     /**
      * Enlist the request of user.
      *

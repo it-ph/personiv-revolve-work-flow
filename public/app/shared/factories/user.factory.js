@@ -55,5 +55,8 @@ sharedModule
 			enlist: function(data){
 				return $http.post(urlBase + '/enlist', data);
 			},
+			pending: function(){
+				return $http.post(urlBase + '/pending');
+			},
 		}
 	}]);

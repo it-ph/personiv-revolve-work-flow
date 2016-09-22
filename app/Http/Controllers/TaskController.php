@@ -199,7 +199,7 @@ class TaskController extends Controller
                             $query->withTrashed();
                         }])->with(['quality_control' => function($query){
                             $query->withTrashed();
-                        }]);
+                        }])->orderBy('created_at');
                     }]);
 
                     continue;
