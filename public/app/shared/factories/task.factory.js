@@ -32,8 +32,13 @@ sharedModule
 			checkDuplicateMultiple: function(data){
 				return $http.post(urlBase + '/check-duplicate-multiple', data);
 			},
-			enlist: function(data){
-				return $http.post(urlBase + '/enlist', data);
+			enlist: function(data, page){
+				if(!page)
+				{
+					return $http.post(urlBase + '/enlist', data);
+				}
+				
+				return $http.post(urlBase + '/enlist?page=' + page, data);
 			},
 		}
 	}]);

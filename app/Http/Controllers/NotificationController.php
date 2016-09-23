@@ -11,6 +11,22 @@ use Auth;
 
 class NotificationController extends Controller
 {
+    /**
+     * Paginate all notifications of authenticated user.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function paginate(Request $request)
+    {
+        return Notification::where('notifiable_id', $request->user()->id)->where('notifiable_type', 'App\\User')->orderBy('created_at', 'desc')->paginate($request->paginate);
+    }
+
+
+    /**
+     * Mark all unread notifications as read.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function markAllAsRead(Request $request)
     {
         $notifications = Notification::where('notifiable_type', 'App\\User')->where('notifiable_id', Auth::user()->id)->whereNull('read_at')->get();
@@ -28,6 +44,11 @@ class NotificationController extends Controller
         return $user;
     }
 
+    /**
+     * Mark notification as read.
+     *
+     * @return \Illuminate\Http\Response
+     */
     public function markAsRead(Request $request, $id)
     {
         $notification = Notification::where('id', $id)->first();

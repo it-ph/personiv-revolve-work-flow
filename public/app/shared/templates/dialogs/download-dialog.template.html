@@ -1,0 +1,43 @@
+<md-dialog aria-label="Download Form"  flex flex-gt-sm="50" flex-gt-lg="40" ng-cloak>
+    <form name="downloadForm">
+        <md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">Download</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <div layout="row" layout-wrap flex>
+                <!-- Date Start -->
+                <div layout-padding flex>
+                    <h4>Date Start</h4>
+                    <md-datepicker name="DateStart" ng-model="date.start" md-placeholder="Date start" md-max-date="date.end" required ></md-datepicker>
+                    <div class="validation-messages" ng-messages="downloadForm.DateStart.$error">
+                        <div ng-message="valid">The entered value is not a date!</div>
+                        <div ng-message="required">Date start is required</div>
+                        <div ng-message="maxdate">Date start cannot be later than date end</div>
+                    </div>
+                </div>
+                <!-- Date End -->
+                <div layout-padding flex>
+                    <h4>Date End</h4>
+                    <md-datepicker name="DateEnd" ng-model="date.end" md-placeholder="Date end" md-min-date="date.start" required ></md-datepicker>
+                    <div class="validation-messages" ng-messages="downloadForm.DateEnd.$error">
+                        <div ng-message="valid">The entered value is not a date!</div>
+                        <div ng-message="required">Date end is required</div>
+                        <div ng-message="mindate">Date end cannot be earlier than date start</div>
+                    </div>
+                </div>
+            </div>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Download
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

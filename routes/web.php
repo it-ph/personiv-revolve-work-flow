@@ -80,6 +80,8 @@ Route::group(['prefix' => 'spreadsheet'], function(){
 	Route::get('read/{spreadsheetID}', 'SpreadsheetController@read');
 });
 
+Route::get('spreadsheet-download/{date_start}/to/{date_end}', 'SpreadsheetController@download');
+
 /* Designer Assigned Routes */
 Route::group(['prefix' => 'designer-assigned'], function(){
 	Route::post('paginate', 'DesignerAssignedController@paginate');
@@ -109,5 +111,6 @@ Route::group(['prefix' => 'rework'], function(){
 Route::group(['prefix' => 'notification'], function(){
 	Route::post('mark-as-read/{notificationID}', 'NotificationController@markAsRead');
 	Route::post('mark-all-as-read', 'NotificationController@markAllAsRead');
+	Route::post('paginate', 'NotificationController@paginate');
 });
 

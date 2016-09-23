@@ -19,6 +19,11 @@ class SpreadsheetController extends Controller
     {
         $this->middleware('role:quality_control,admin');
     }
+
+    public function download($date_start, $date_end)
+    {
+        
+    }
     /**
      * Paginate list of sheets.
      *

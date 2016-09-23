@@ -239,6 +239,12 @@ class TaskController extends Controller
             }
         }
 
+        // iterates whereBetween clauses declared by user
+        if($request->input('whereBetween'))
+        {
+            $tasks->whereBetween($request->input('whereBetween.label'), [Carbon::parse($request->input('whereBetween.start')), Carbon::parse($request->input('whereBetween.end'))]);
+        }
+
         if($request->searchText)
         {
             $tasks->where('file_name', 'like', '%'. $request->searchText .'%');

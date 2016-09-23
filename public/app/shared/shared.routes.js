@@ -19,4 +19,7 @@ sharedModule
 				url: '/page-not-found',
 				templateUrl: '/app/shared/views/page-not-found.view.html',
 			})
+
+		$mdThemingProvider.theme('dark-orange').backgroundPalette('orange').dark();
+		$mdThemingProvider.theme('dark-teal').backgroundPalette('teal').dark();
 	}]);

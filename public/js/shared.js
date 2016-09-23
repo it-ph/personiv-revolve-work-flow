@@ -28,6 +28,9 @@ sharedModule
 				url: '/page-not-found',
 				templateUrl: '/app/shared/views/page-not-found.view.html',
 			})
+
+		$mdThemingProvider.theme('dark-orange').backgroundPalette('orange').dark();
+		$mdThemingProvider.theme('dark-teal').backgroundPalette('teal').dark();
 	}]);
 sharedModule
 	.controller('changePasswordDialogController', ['$scope', '$mdDialog', 'User', 'Preloader', function($scope, $mdDialog, User, Preloader){
@@ -77,10 +80,344 @@ sharedModule
 		};
 	}]);
 sharedModule
-	.controller('sharedDashboardContentContainerController', ['$scope', 'Preloader', 'User', function($scope, Preloader, User){
+	.controller('sharedDashboardContentContainerController', ['$scope', '$filter', '$state', '$mdDialog', 'Preloader', 'Category', 'Client', 'Task', function($scope, $filter, $state, $mdDialog, Preloader, Category, Client, Task){
+		$scope.$on('refresh', function(){
+			$scope.init($scope.subheader.current.request);
+		});
+
 		$scope.toolbar = {};
 
 		$scope.toolbar.childState = 'Dashboard';
+
+		$scope.toolbar.getItems = function(query){
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.task.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.task.busy = false;
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+		};
+
+		/* Sets up the page for what tab it is*/
+		var setInit = function(nav){
+			$scope.subheader.current = nav;
+
+			$scope.toolbar.items = [];
+			
+			$scope.init($scope.subheader.current.request);
+		}
+
+		/**
+		 * Object for subheader
+		 *
+		*/
+		$scope.subheader = {};
+
+		$scope.subheader.show = true;
+
+		$scope.subheader.sort = [
+			{
+				'label': 'File Name',
+				'type': 'file_name',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Category',
+				'type': 'category',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Delivery Date',
+				'type': 'delivery_date',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Live Date',
+				'type': 'live_date',
+				'sortReverse': false,
+			},
+			{
+				'label': 'Recently added',
+				'type': 'created_at',
+				'sortReverse': false,
+			},
+		];
+
+		$scope.subheader.refresh = function(){
+			$scope.isLoading = true;
+  			$scope.task.show = false;
+
+  			$scope.init($scope.subheader.current.request);
+		}
+
+		$scope.subheader.sortBy = function(filter){
+			filter.sortReverse = !filter.sortReverse;			
+			$scope.sortType = filter.type;
+			$scope.sortReverse = filter.sortReverse;
+		}
+
+		$scope.subheader.setCategoryFilter = function(filter){
+			if($scope.categoryFilter == filter)
+			{
+				return $scope.categoryFilter = '';
+			}
+
+			$scope.categoryFilter = filter;
+		}
+
+		$scope.subheader.setClientFilter = function(filter){
+			if($scope.clientFilter == filter)
+			{
+				return $scope.clientFilter = '';
+			}
+
+			$scope.clientFilter = filter;
+		}
+
+		var pushNavs = function(data){
+			var item = {
+				'label': data.label,
+				'request': {
+					'withTrashed': false,
+					'with': [
+						{
+							'relation' : 'category',
+							'withTrashed': true,
+						},
+						{
+							'relation' : 'client',
+							'withTrashed': true,
+						},
+						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'reworks',
+							'withTrashed': false,
+						},
+					],
+					'whereBetween':
+					{
+						'label':'updated_at',
+						'start': data.start,
+						'end': data.end,
+					},
+					'where': [
+						{
+							'label':'status',
+							'condition': '=',
+							'value': 'complete',
+						},
+					],
+					'paginate': 100,
+				},
+				'menu': [
+					{
+						'label': 'Download',
+						'icon': 'mdi-download',
+						action: function(){
+							$mdDialog.show({
+						      	controller: 'downloadDialogController',
+						      	templateUrl: '/app/shared/templates/dialogs/download-dialog.template.html',
+						      	parent: angular.element(document.body),
+						      	fullscreen: true,
+						    })
+						    .then(function(){
+						    })
+						},
+					},
+				],
+				action: function(current){
+					setInit(current);
+				},
+			}
+
+			$scope.subheader.navs.push(item);
+		}
+
+		var days = [
+			{
+				'label': 'Monday',
+			},
+			{
+				'label': 'Tuesday',
+			},
+			{
+				'label': 'Wednesday',
+			},
+			{
+				'label': 'Thursday',
+			},
+			{
+				'label': 'Friday',
+			},
+			{
+				'label': 'Saturday',
+			},
+		];
+
+		var getMonday = function(d){
+			d = new Date(d);
+			var day = d.getDay(),
+			diff = d.getDate() - day + (day == 0 ? -6:1);
+			return new Date(d.setDate(diff));
+		}
+
+		$scope.fetchDays = function(date)
+		{
+			var d = new Date(date);
+
+			$scope.subheader.navs = [];
+
+			angular.forEach(days, function(item, key){
+				item.start = new Date();
+				item.start.setDate(d.getDate() + key);
+
+				item.end = new Date();
+				item.end.setDate(item.start.getDate() + 1);
+
+				item.start = item.start.toDateString();
+				item.end = item.end.toDateString();
+
+				pushNavs(item);
+			});
+
+			if($scope.subheader.currentNavItem)
+			{
+				$scope.subheader.currentNavItem = $scope.subheader.navs[today.getDay() - 1].label;
+
+				/* Sets up the page for what tab it is*/
+				setInit($scope.subheader.navs[today.getDay() - 1]);
+			}		
+		}
+
+		$scope.date_start = getMonday(new Date());
+		$scope.fetchDays($scope.date_start);
+		
+		$scope.mondaysOnly = function(date) {
+		    var day = date.getDay();
+		    return day === 1;
+		};
+
+		var today = new Date();
+
+		var pushItem = function(item){
+			item.first_letter = item.file_name.charAt(0).toUpperCase();
+			item.created_at = new Date(item.created_at);
+			item.updated_at = new Date(item.updated_at);
+			item.delivery_date = new Date(item.delivery_date);
+			item.live_date = new Date(item.live_date);
+			item.deleted_at = item.deleted_at ? new Date(item.deleted_at) : null;
+			item.category = item.category.name;
+			item.client = item.client.name;
+
+			var filter = {};
+			filter.display = item.file_name;
+
+			$scope.toolbar.items.push(filter);
+		}
+
+		$scope.viewTask = function(id)
+		{
+			$state.go('main.task', {'taskID':id});
+		}
+
+		$scope.init = function(request){
+			Category.index()
+				.success(function(data){
+					$scope.categories = data;
+				})
+
+			Client.index()
+				.success(function(data){
+					$scope.clients = data;
+				})
+
+			$scope.task = {};
+			$scope.task.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.task.page = 2;
+
+			Task.enlist(request)
+				.success(function(data){
+					if(!data)
+					{
+						$scope.task.show = true;
+						return;
+					}
+					
+					$scope.task.details = data;
+					$scope.task.items = data.data;
+					$scope.task.show = true;
+
+					if(data.data.length){
+						// iterate over each record and set the updated_at date and first letter
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+
+					}
+
+					$scope.task.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.task.busy || ($scope.task.page > $scope.task.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.task.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Task.enlist(request, $scope.task.page)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.task.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.task.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.task.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				})
+		}
+
+		$scope.subheader.currentNavItem = $scope.subheader.navs[today.getDay() - 1].label;
+
+		/* Sets up the page for what tab it is*/
+		setInit($scope.subheader.navs[today.getDay() - 1]);
 	}]);
 sharedModule
 	.controller('sharedMainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){
@@ -434,6 +771,207 @@ sharedModule
 				    }),
 			    ];
 			})
+	}]);
+sharedModule
+	.controller('sharedNotificationsContentContainerController', ['$scope', '$filter', '$state', 'Preloader', 'Notification', 'User', function($scope, $filter, $state, Preloader, Notification, User){
+		$scope.$on('refresh', function(){
+			$scope.init();
+		});
+
+		$scope.toolbar = {};
+
+		$scope.toolbar.childState = 'Notifications';
+
+		$scope.toolbar.getItems = function(query){
+			$scope.showInactive = true;
+			var results = query ? $filter('filter')($scope.toolbar.items, query) : $scope.toolbar.items;
+			return results;
+		}
+
+		/**
+		 * Reveals the search bar.
+		 *
+		*/
+		$scope.showSearchBar = function(){
+			$scope.notification.busy = true;
+			$scope.searchBar = true;
+		};
+
+		/**
+		 * Hides the search bar.
+		 *
+		*/
+		$scope.hideSearchBar = function(){
+			$scope.notification.busy = false;
+			$scope.searchBar = false;
+			$scope.toolbar.searchText = '';
+			$scope.toolbar.searchItem = '';
+		};
+
+		var pushItem = function(notif){
+			notif.data = JSON.parse(notif.data);
+			notif.first_letter = notif.data.sender.name.charAt(0).toUpperCase();
+			notif.sender = notif.data.sender.name;
+			notif.created_at = new Date(notif.created_at);
+
+			if(notif.type == 'App\\Notifications\\TaskCreated'){
+				notif.message = 'created a new task.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+			else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
+				notif.message = 'created a new sheet.';
+				notif.task_id = notif.data.attachment.id
+			}
+
+			else if(notif.type == 'App\\Notifications\\TaskAssignedToDesigner'){
+				notif.message = 'assigned a task for ' + notif.data.attachment.designer.name + '.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\DesignerTaskStart'){
+				notif.message = 'started to work on ' + notif.data.attachment.task.file_name + '.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\TaskDeleted'){
+				notif.message = 'deleted a task.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\DesignerTaskDecline'){
+				notif.message = 'declined to work on ' + notif.data.attachment.task.file_name + '.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\ForQC'){
+				notif.message = 'submitted a task for quality control.';
+				notif.task_id = notif.data.attachment.id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\QualityControlTaskStart'){
+				notif.message = 'started to work on ' + notif.data.attachment.task.file_name + '.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
+				notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as complete.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\TaskRework'){
+				notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as rework.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\NotifyComment'){
+				notif.message = 'commented on a task on ' + notif.data.attachment.file_name + '.';
+				notif.task_id = notif.data.attachment.id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\DesignerRevisionStart'){
+				notif.message = 'started to revise ' + notif.data.attachment.task.file_name + '.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			/* Designers */
+			else if(notif.type == 'App\\Notifications\\NotifyDesignerForNewTask'){
+				notif.message = 'assigned a task for you.';
+				notif.task_id = notif.data.attachment.task_id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\NotifyDesignerForCompleteTask'){
+				notif.message = 'marked your task ' + notif.data.attachment.file_name + ' as complete.';
+				notif.task_id = notif.data.attachment.id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\NotifyComment'){
+				notif.message = 'commented on your task on ' + notif.data.attachment.file_name + '.';
+				notif.task_id = notif.data.attachment.id;
+			}
+
+			else if(notif.type == 'App\\Notifications\\NotifyDesignerForTaskRework'){
+				notif.message = 'marked your task ' + notif.data.attachment.file_name + ' as rework.';
+				notif.task_id = notif.data.attachment.id;
+			}
+
+			var item = {
+				'display': notif.sender,
+				'message': notif.message,
+				'file_name': notif.data.attachment.file_name ? notif.data.attachment.file_name : null,
+			}
+
+			$scope.toolbar.items.push(item);
+		}
+
+		$scope.init = function(){
+			var request = {
+				'paginate': 20,
+			}
+
+			$scope.notification = {};
+			$scope.notification.items = [];
+			$scope.toolbar.items = [];
+
+			// 2 is default so the next page to be loaded will be page 2 
+			$scope.notification.page = 2;
+
+			Notification.paginate(request)
+				.success(function(data){
+					if(!data)
+					{
+						$scope.notification.show = true;
+						return;
+					}
+					
+					$scope.notification.details = data;
+					$scope.notification.items = data.data;
+					$scope.notification.show = true;
+
+					// Hides inactive records
+					$scope.showInactive = false;
+
+					if(data.data.length){
+						// iterate over each record and set the updated_at date and first letter
+						angular.forEach(data.data, function(item){
+							pushItem(item);
+						});
+
+					}
+
+					$scope.notification.paginateLoad = function(){
+						// kills the function if ajax is busy or pagination reaches last page
+						if($scope.notification.busy || ($scope.notification.page > $scope.notification.details.last_page)){
+							$scope.isLoading = false;
+							return;
+						}
+						/**
+						 * Executes pagination call
+						 *
+						*/
+						// sets to true to disable pagination call if still busy.
+						$scope.notification.busy = true;
+						$scope.isLoading = true;
+						// Calls the next page of pagination.
+						Notification.paginate(request, $scope.notification.page)
+							.success(function(data){
+								// increment the page to set up next page for next AJAX Call
+								$scope.notification.page++;
+
+								// iterate over each data then splice it to the data array
+								angular.forEach(data.data, function(item, key){
+									pushItem(item);
+									$scope.notification.items.push(item);
+								});
+
+								// Enables again the pagination call for next call.
+								$scope.notification.busy = false;
+								$scope.isLoading = false;
+							});
+					}
+				})
+		};
+
+		$scope.init();
 	}]);
 sharedModule
 	.controller('sheetsContentContainerController', ['$scope', '$filter', '$state', 'Preloader', 'Spreadsheet', function($scope, $filter, $state, Preloader, Spreadsheet){
@@ -1139,6 +1677,7 @@ sharedModule
 		$scope.$on('refresh', function(){
 			$scope.init($scope.subheader.current.request);
 		});
+		
 		/**
 		 * Reveals the search bar.
 		 *
@@ -1974,6 +2513,14 @@ sharedModule
 			markAllAsRead: function(){
 				return $http.post(urlBase + '/mark-all-as-read');
 			},
+			paginate: function(data, page){
+				if(!page)
+				{
+					return $http.post(urlBase + '/paginate', data);
+				}
+				
+				return $http.post(urlBase + '/paginate?page=' + page, data);
+			}
 		}
 	}]);
 sharedModule
@@ -2128,8 +2675,13 @@ sharedModule
 			checkDuplicateMultiple: function(data){
 				return $http.post(urlBase + '/check-duplicate-multiple', data);
 			},
-			enlist: function(data){
-				return $http.post(urlBase + '/enlist', data);
+			enlist: function(data, page){
+				if(!page)
+				{
+					return $http.post(urlBase + '/enlist', data);
+				}
+				
+				return $http.post(urlBase + '/enlist?page=' + page, data);
 			},
 		}
 	}]);
@@ -2560,6 +3112,32 @@ sharedModule
 					});
 			}
 		}
+	}]);
+sharedModule
+	.controller('downloadDialogController', ['$scope', '$mdDialog', '$filter', function($scope, $mdDialog, $filter){
+		$scope.date = {};
+		$scope.date.start = new Date();
+		$scope.date.end = new Date();
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.downloadForm.$invalid){
+				angular.forEach($scope.downloadForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+			}
+			else{
+				var win = window.open('/spreadsheet-download/' + $filter('date')($scope.date.start, 'yyyy-MM-dd') + '/to/' + $filter('date')($scope.date.end, 'yyyy-MM-dd'), '_blank');
+				win.focus();
+			}
+
+		}
+
 	}]);
 sharedModule
 	.controller('editCategoriesDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', function($scope, $mdDialog, Preloader, Category){

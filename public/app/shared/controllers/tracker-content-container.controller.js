@@ -14,6 +14,7 @@ sharedModule
 		$scope.$on('refresh', function(){
 			$scope.init($scope.subheader.current.request);
 		});
+		
 		/**
 		 * Reveals the search bar.
 		 *

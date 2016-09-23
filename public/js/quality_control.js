@@ -66,6 +66,24 @@ qualityControlModule
 					},
 				}
 			})
+			.state('main.notifications', {
+				url: 'notifications',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'sharedNotificationsContentContainerController',
+					},
+					'toolbar@main.notifications': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.notifications': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.notifications':{
+						templateUrl: '/app/shared/templates/content/notifications-content.template.html',
+					},
+				}
+			})
 			.state('main.upload', {
 				url: 'upload',
 				views: {

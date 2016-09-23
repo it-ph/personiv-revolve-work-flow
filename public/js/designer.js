@@ -11,7 +11,7 @@ designerModule
 					},
 					'content-container@main': {
 						templateUrl: '/app/shared/views/content-container.view.html',
-						controller: 'dashboardContentContainerController',
+						controller: 'sharedDashboardContentContainerController',
 					},
 					'toolbar@main': {
 						templateUrl: '/app/shared/templates/toolbar.template.html',
@@ -19,8 +19,11 @@ designerModule
 					'left-sidenav@main': {
 						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
+					'subheader@main': {
+						templateUrl: '/app/shared/templates/subheaders/dashboard-subheader.template.html',
+					},
 					'content@main':{
-						templateUrl: '/app/components/designer/templates/content/content.template.html',
+						templateUrl: '/app/shared/templates/content/dashboard-content.template.html',
 					}
 				}
 			})
@@ -45,6 +48,24 @@ designerModule
 					},
 				}
 			})
+			.state('main.notifications', {
+				url: 'notifications',
+				views: {
+					'content-container':{
+						templateUrl: '/app/shared/views/content-container.view.html',
+						controller: 'sharedNotificationsContentContainerController',
+					},
+					'toolbar@main.notifications': {
+						templateUrl: '/app/shared/templates/toolbar.template.html',
+					},
+					'left-sidenav@main.notifications': {
+						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
+					},
+					'content@main.notifications':{
+						templateUrl: '/app/shared/templates/content/notifications-content.template.html',
+					},
+				}
+			})
 			.state('main.task', {
 				url: 'task/{taskID}',
 				views: {
@@ -63,12 +84,6 @@ designerModule
 					},
 				}
 			})
-	}]);
-designerModule	
-	.controller('dashboardContentContainerController', ['$scope', function($scope){
-		$scope.toolbar = {};
-
-		$scope.toolbar.childState = 'Dashboard';
 	}]);
 designerModule
 	.controller('mainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){

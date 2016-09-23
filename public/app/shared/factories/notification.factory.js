@@ -24,5 +24,13 @@ sharedModule
 			markAllAsRead: function(){
 				return $http.post(urlBase + '/mark-all-as-read');
 			},
+			paginate: function(data, page){
+				if(!page)
+				{
+					return $http.post(urlBase + '/paginate', data);
+				}
+				
+				return $http.post(urlBase + '/paginate?page=' + page, data);
+			}
 		}
 	}]);

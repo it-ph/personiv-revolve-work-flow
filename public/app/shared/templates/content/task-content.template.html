@@ -142,7 +142,7 @@
                     Pass
                 </md-button>
             </div>
-            <div ng-if="task.status == 'rework' && user.role != 'designer' && task.reworks[task.reworks.length-1].quality_control_time_end">
+            <div ng-if="(task.status == 'rework' && user.role != 'designer' && task.reworks[task.reworks.length-1].quality_control_time_end) ||(task.status == 'rework' && user.role != 'designer' && !task.reworks.length) ">
                 <md-button aria-label="Reassign" ng-click="reassign()">
                     Assign Revision
                 </md-button>
