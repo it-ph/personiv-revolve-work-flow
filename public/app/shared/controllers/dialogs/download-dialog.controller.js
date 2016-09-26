@@ -21,6 +21,7 @@ sharedModule
 				win.focus();
 			}
 
+			$scope.cancel();
 		}
 
 	}]);

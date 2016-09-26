@@ -94,6 +94,8 @@ sharedModule
 			return results;
 		}
 
+		$scope.toolbar.searchAll = true;
+
 		/**
 		 * Reveals the search bar.
 		 *
@@ -112,6 +114,22 @@ sharedModule
 			$scope.searchBar = false;
 			$scope.toolbar.searchText = '';
 			$scope.toolbar.searchItem = '';
+			/* Cancels the paginate when the user sent a query */
+			if($scope.searched){
+				$scope.task.page = 1;
+				$scope.task.no_matches = false;
+				$scope.task.items = [];
+				$scope.searched = false;
+
+				$scope.init($scope.subheader.current.request);
+			}
+		};
+
+		$scope.searchUserInput = function(){
+			$scope.isLoading = true;
+  			$scope.task.show = false;
+  			$scope.searched = true;
+  			$scope.init($scope.subheader.current.request, true);
 		};
 
 		/* Sets up the page for what tab it is*/
@@ -243,8 +261,6 @@ sharedModule
 						      	parent: angular.element(document.body),
 						      	fullscreen: true,
 						    })
-						    .then(function(){
-						    })
 						},
 					},
 				],
@@ -305,10 +321,12 @@ sharedModule
 
 			if($scope.subheader.currentNavItem)
 			{
-				$scope.subheader.currentNavItem = $scope.subheader.navs[today.getDay() - 1].label;
+				$scope.subheader.currentNavItem = today.getDay() ? $scope.subheader.navs[today.getDay() -1].label : $scope.subheader.navs[6].label;
 
 				/* Sets up the page for what tab it is*/
-				setInit($scope.subheader.navs[today.getDay() - 1]);
+				var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+
+				setInit(nav);
 			}		
 		}
 
@@ -335,7 +353,31 @@ sharedModule
 			var filter = {};
 			filter.display = item.file_name;
 
-			$scope.toolbar.items.push(filter);
+			if($scope.user.role=='designer' && !item.reworks.length && item.designer_assigned.designer_id == $scope.user.id)
+			{
+				$scope.count++;
+				$scope.toolbar.items.push(filter);
+			}
+			else if($scope.user.role=='quality_control' && !item.reworks.length && item.quality_control_assigned.quality_control_id == $scope.user.id)
+			{
+				$scope.count++;
+				$scope.toolbar.items.push(filter);
+			}
+			else if($scope.user.role=='admin')
+			{
+				$scope.count++;
+				$scope.toolbar.items.push(filter);
+			}
+			else if($scope.user.role=='designer' && item.reworks.length && item.reworks[item.reworks.length-1].designer_id == $scope.user.id)
+			{
+				$scope.count++;
+				$scope.toolbar.items.push(filter);
+			}
+			else if($scope.user.role=='quality_control' && item.reworks.length && item.reworks[item.reworks.length-1].quality_control_id == $scope.user.id)
+			{
+				$scope.count++;
+				$scope.toolbar.items.push(filter);
+			}
 		}
 
 		$scope.viewTask = function(id)
@@ -343,7 +385,7 @@ sharedModule
 			$state.go('main.task', {'taskID':id});
 		}
 
-		$scope.init = function(request){
+		$scope.init = function(request, searched){
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;
@@ -357,6 +399,21 @@ sharedModule
 			$scope.task = {};
 			$scope.task.items = [];
 			$scope.toolbar.items = [];
+			$scope.count = 0;
+
+			if(searched)
+			{
+	  			request.searchText = $scope.toolbar.searchText;
+			}
+			else{
+				$scope.searchBar = false;
+				$scope.toolbar.searchText = '';
+				$scope.toolbar.searchItem = '';
+				$scope.task.page = 1;
+				$scope.task.no_matches = false;
+				$scope.searched = false;
+				request.searchText = null;
+			}
 
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.task.page = 2;
@@ -414,10 +471,12 @@ sharedModule
 				})
 		}
 
-		$scope.subheader.currentNavItem = $scope.subheader.navs[today.getDay() - 1].label;
+		var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+		
+		$scope.subheader.currentNavItem = nav.label;
 
 		/* Sets up the page for what tab it is*/
-		setInit($scope.subheader.navs[today.getDay() - 1]);
+		setInit(nav);
 	}]);
 sharedModule
 	.controller('sharedMainViewController', ['$scope', '$state', '$mdDialog', '$mdSidenav', '$mdToast', 'User', 'Preloader', 'Notification', function($scope, $state, $mdDialog, $mdSidenav, $mdToast, User, Preloader, Notification){
@@ -599,7 +658,7 @@ sharedModule
 				}
 
 				else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
-					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as complete.';
+					notif.message = 'marked ' + notif.data.attachment.file_name + ' as complete.';
 					notif.action = function(id){
 						// mark as read
 						Notification.markAsRead(id)
@@ -612,14 +671,14 @@ sharedModule
 				}
 
 				else if(notif.type == 'App\\Notifications\\TaskRework'){
-					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as rework.';
+					notif.message = 'marked ' + notif.data.attachment.file_name + ' as rework.';
 					notif.action = function(id){
 						// mark as read
 						Notification.markAsRead(id)
 							.success(function(data){
 								formatNotification(data);
 								$scope.user = data;
-								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
 							})
 					}
 				}
@@ -854,12 +913,12 @@ sharedModule
 			}
 
 			else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
-				notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as complete.';
+				notif.message = 'marked ' + notif.data.attachment.file_name + ' as complete.';
 				notif.task_id = notif.data.attachment.task_id;
 			}
 
 			else if(notif.type == 'App\\Notifications\\TaskRework'){
-				notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as rework.';
+				notif.message = 'marked ' + notif.data.attachment.file_name + ' as rework.';
 				notif.task_id = notif.data.attachment.task_id;
 			}
 
@@ -3136,6 +3195,7 @@ sharedModule
 				win.focus();
 			}
 
+			$scope.cancel();
 		}
 
 	}]);

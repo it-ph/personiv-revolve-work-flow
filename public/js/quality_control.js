@@ -19,8 +19,11 @@ qualityControlModule
 					'left-sidenav@main': {
 						templateUrl: '/app/shared/templates/sidenavs/main-left-sidenav.template.html',
 					},
+					'subheader@main': {
+						templateUrl: '/app/shared/templates/subheaders/dashboard-subheader.template.html',
+					},
 					'content@main':{
-						templateUrl: '/app/components/admin/templates/content/content.template.html',
+						templateUrl: '/app/shared/templates/content/dashboard-content.template.html',
 					}
 				}
 			})

@@ -178,7 +178,7 @@ sharedModule
 				}
 
 				else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
-					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as complete.';
+					notif.message = 'marked ' + notif.data.attachment.file_name + ' as complete.';
 					notif.action = function(id){
 						// mark as read
 						Notification.markAsRead(id)
@@ -191,14 +191,14 @@ sharedModule
 				}
 
 				else if(notif.type == 'App\\Notifications\\TaskRework'){
-					notif.message = 'marked ' + notif.data.attachment.task.file_name + ' as rework.';
+					notif.message = 'marked ' + notif.data.attachment.file_name + ' as rework.';
 					notif.action = function(id){
 						// mark as read
 						Notification.markAsRead(id)
 							.success(function(data){
 								formatNotification(data);
 								$scope.user = data;
-								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
 							})
 					}
 				}

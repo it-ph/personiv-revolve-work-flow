@@ -24,7 +24,7 @@
 			</md-button>
 		</md-list-item>
 		<!-- Select Multiple -->
-		<md-list-item ng-if="selectMultiple && !task.designer_assigned" class="md-2-line md-long-text" ng-repeat="task in task.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="!task.deleted_at">
+		<md-list-item ng-if="selectMultiple && !task.designer_assigned && !task.deleted_at" class="md-2-line md-long-text" ng-repeat="task in task.items | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-if="!task.deleted_at">
 			<h2 class="md-avatar" ng-class="task.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
 				<span class="md-headline white-text">{{task.first_letter}}</span>
 			</h2>
