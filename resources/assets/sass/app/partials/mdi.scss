@@ -1,0 +1,31 @@
+.mdi{
+	font-size: 24px;
+	vertical-align: middle;
+	color: white !important;
+	line-height: 1;
+}
+
+.md-mini .mdi{
+	font-size: 21px !important;
+}
+
+.mdi-large.mdi{
+	font-size: 36px !important;
+}
+
+.mdi.grey{
+	color: $secondary-text !important;
+}
+
+.mdi.accent{
+	color: $accent;
+}
+
+.mdi.primary{
+	color: $primary500;
+}
+
+.mdi.baseline{
+	vertical-align: baseline;
+}
+

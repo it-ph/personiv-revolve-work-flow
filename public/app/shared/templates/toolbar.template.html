@@ -1,0 +1,82 @@
+<div class="md-toolbar-tools" layout="row" flex flex-gt-md="85">
+	<md-button class="md-icon-button" ng-click="toggleSidenav('left')" hide-gt-sm ng-if="!searchBar">
+		<md-icon class="mdi mdi-24px mdi-menu" aria-label="Toogle Sidenav"></md-icon>
+	</md-button>
+  	<a ui-sref="main" layout="row" layout-align="center center" layout-padding class="site-logo" hide-md hide-sm hide-xs>
+		<img src="/img/Personiv-Final_white_transparent.png" alt="Personiv Logo">
+	</a>
+	<span flex="5" hide-md hide-sm hide-xs></span>
+	<span flex="5" ng-if="!searchBar"></span>
+	<span class="md-headline white-text" ng-if="!searchBar"> <span hide-md hide-sm hide-xs>{{ toolbar.parentState }}</span>
+		<md-icon class="mdi mdi-24px mdi-chevron-right" aria-label="chevron right" ng-if="toolbar.parentState && toolbar.childState" hide-md hide-sm hide-xs></md-icon>
+		<span ng-if="toolbar.childState">{{ toolbar.childState }}</span>
+	</span>
+	<div flex>	
+		<!-- Search Bar -->
+		<div layout="row" ng-if="searchBar" flex flex-gt-sm="70" layout-align="center center">
+			<md-button class="md-icon-button" ng-click="hideSearchBar()">
+				<md-icon class="mdi mdi-24px mdi-arrow-left" aria-label="Hide Search Bar"></md-icon>
+			</md-button>
+			<!-- Search Bar -->
+			<form layout="row" flex class="main-text">
+				<md-autocomplete placeholder="Search" md-selected-item="toolbar.searchItem" md-search-text="toolbar.searchText" md-items="item in toolbar.getItems(toolbar.searchText)" md-item-text="item.display" flex md-no-cache="true">
+					<md-item-template>
+						<p>
+							<md-icon class="mdi mdi-magnify mdi-24px grey"></md-icon>
+							<span md-highlight-text="toolbar.searchText" md-highlight-flags="^i">{{item.display}}</span>
+						</p>
+			        </md-item-template>
+					<md-not-found>
+						<p ng-if="!toolbar.searchAll">No results matching <span class="primary-text">"{{toolbar.searchText}}"</span> were found.</p>
+					    <p ng-click="searchUserInput(toolbar.searchText)" ng-if="toolbar.searchAll" flex>Click to see all results for <span class="primary-text">"{{toolbar.searchText}}"</span></p>
+					</md-not-found>
+				</md-autocomplete>
+				<md-button type="submit" class="md-icon-button" ng-click="searchUserInput(toolbar.searchText)" ng-if="toolbar.searchAll">
+					<md-icon class="mdi mdi-24px mdi-magnify" aria-label="Search"></md-icon>
+				</md-button>
+			</form>
+		</div>
+		<!-- Icon Buttons -->
+		<div flex layout="row" layout-align="end center" ng-if="!searchBar">
+			<span flex></span>
+			<md-button class="md-icon-button" ng-click="showSearchBar()" ng-if="!toolbar.hideSearchIcon">
+				<md-icon class="mdi mdi-24px mdi-magnify" aria-label="Search"></md-icon>
+			</md-button>
+			<md-menu md-position-mode="target-right target" hide-xs hide-sm>
+				<md-button layout="row" aria-label="Notifications" ng-click="$mdOpenMenu($event)">
+					<md-icon class="mdi mdi-bell"></md-icon>
+					<span class="badge" ng-if="user.unread_notifications.length">{{ user.unread_notifications.length }}</span>
+				</md-button>
+				<md-menu-content width="6">
+					<md-subheader ng-if="!user.unread_notifications.length">No unread notifications</md-subheader>
+					<md-subheader class="md-primary" ng-if="user.unread_notifications.length">Notifications</md-subheader>
+					<md-menu-item ng-if="user.unread_notifications.length">
+		                <md-button aria-label="Mark All as Read" ng-click="markAllAsRead()" flex>
+		                    <div layout="row">
+		                        <span class="secondary-text">Mark All as Read</span>
+		                        <span flex></span>
+		                        <md-icon ng-show="showInactive" class="mdi mdi-check grey"></md-icon>
+		                    </div>
+		                </md-button>
+		            </md-menu-item>
+					<div ng-repeat="notification in user.unread_notifications">
+						<md-list-item class="md-3-line secondary-button-padding" ng-mouseenter="hover = true" ng-mouseleave="hover = false" ng-click="notification.action(notification.id)">
+					        <h2 class="md-headline primary-bg md-avatar" layout="row" layout-align="center center">
+					            <span class="white-text">{{ notification.first_letter }}</span>
+					        </h2>
+					        <div class="md-list-item-text">
+					            <h3>{{ notification.sender }}</h3>
+					            <h4>{{ notification.message }}</h4>
+					            <p><span am-time-ago=" notification.created_at"></span></p>
+					        </div>
+					        <md-button class="md-secondary md-icon-button hide"  aria-label="Mark as read" ng-click="markAsRead(notification.id)" ng-class="{show:hover}">
+								<md-icon class="mdi mdi-close grey"></md-icon>
+							</md-button>
+					    </md-list-item>
+					</div>
+				</md-menu-content>
+			</md-menu>
+			<span flex="5"></span>
+		</div>
+	</div>
+</div>

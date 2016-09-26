@@ -1,0 +1,54 @@
+<div infinite-scroll='task.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="task.busy" infinite-scroll-parent ng-if="task.show" layout-margin>
+	<md-card ng-if="task.items.length">
+		<md-card-title>
+            <md-card-title-text>
+                <span class="md-headline primary-text">
+                    Completed
+                </span>
+            </md-card-title-text>
+        </md-card-title>
+		<md-card-content>
+			<p>Total: {{count}}</p>
+			<table class="table">
+				<tr>
+					<th>Delivery Date</th>
+					<th>Live Date</th>
+					<th>File Name</th>
+					<th>Client</th>
+					<th>Category</th>
+					<th>Designer</th>
+					<th>QC</th>
+					<th>Status</th>
+				</tr>
+				<tr ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ng-click="viewTask(task.id)" ng-if="(user.role=='designer' && !task.reworks.length && task.designer_assigned.designer_id == user.id) || (user.role=='quality_control' && !task.reworks.length && task.quality_control_assigned.quality_control_id == user.id) || user.role=='admin' || (user.role=='designer' && task.reworks.length && task.reworks[task.reworks.length-1].designer_id == user.id) || (user.role=='quality_control' && task.reworks.length && task.reworks[task.reworks.length-1].quality_control_id == user.id)">
+					<td>{{task.delivery_date | date: 'MMM. dd, yyyy'}}</td>
+					<td>{{task.live_date | date: 'MMM. dd, yyyy'}}</td>
+					<td>{{task.file_name}}</td>
+					<td>{{task.client}}</td>
+					<td>{{task.category}}</td>
+					<td>
+						<span ng-if="!task.reworks.length">{{task.designer_assigned.designer.name}}</span>
+						<span ng-if="task.reworks.length">{{task.reworks[task.reworks.length-1].designer.name}}</span>
+					</td>
+					<td>
+						<span ng-if="!task.reworks.length">{{task.quality_control_assigned.quality_control.name}}</span>
+						<span ng-if="task.reworks.length">{{task.reworks[task.reworks.length-1].quality_control.name}}</span>
+					</td>
+					<td>
+						<span ng-if="task.status == 'complete'">Complete</span>
+					</td>
+				</tr>
+			</table>
+		</md-card-content>
+	</md-card>
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!task.items.length && !task.new.length && task.show && !task.no_matches">
+	Nothing to display.
+</div>
+<div layout-padding layout-margin ng-if="task.no_matches && task.show">
+	<p>No results matching <strong class="accent-text">"{{query.searchText}}"</strong> were found.</p>
+</div>
+

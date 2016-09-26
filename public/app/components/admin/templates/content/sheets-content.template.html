@@ -1,0 +1,19 @@
+<div infinite-scroll='sheet.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="sheet.busy" infinite-scroll-parent ng-if="sheet.show">
+	<md-list>
+		<md-list-item class="md-2-line" ui-sref="main.sheet({sheetID:sheet.id})" ng-repeat="sheet in sheet.items | filter: toolbar.searchText | orderBy:sortsheet:sortReverse">
+			<h2 class="md-avatar" ng-class="sheet.deleted_at ? 'accent-bg': 'primary-bg'" layout="row" layout-align="center center">
+				<span class="md-headline white-text">{{sheet.first_letter}}</span>
+			</h2>
+			<div class="md-list-item-text">
+				<h3>Tasks: {{sheet.tasks.length}}</h3>
+				<h4>Date created: {{sheet.updated_at | date:'EEEE, MMM dd, yyyy, hh:mma'}}</h4>
+			</div>
+		</md-list-item>
+	</md-list>
+</div>
+<div layout="row" layout-align="center center" layout-padding layout-margin ng-if="isLoading">
+	<md-progress-circular class="md-primary" md-diameter="60"></md-progress-circular>
+</div>
+<div layout-padding layout-margin ng-if="!sheet.items.length && sheet.show && !sheet.no_matches">
+	Nothing to display.
+</div>

@@ -1,0 +1,12 @@
+<div infinite-scroll='user.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="user.busy" infinite-scroll-parent>
+	<md-list-item class="md-3-line" ng-repeat="user in user.paginated">
+		<h2 class="md-avatar" layout="row" layout-align="center center">
+			<span class="md-headline">{{user.name.charAt(0)}}</span>
+		</h2>
+		<div class="md-list-item-text">
+			<h3>{{user.name}}</h3>
+			<h4>{{user.email}}</h4>
+			<p>{{user.role}}</p>
+		</div>
+	</md-list-item>
+</div>

@@ -1,0 +1,68 @@
+<md-dialog aria-label="User Form"  flex flex-gt-sm="50" flex-gt-lg="40" ng-cloak>
+    <form name="userForm">
+        <md-toolbar >
+            <div class="md-toolbar-tools">
+                <h2 class="white-text">New {{label}}</h2>
+                <span flex></span>
+                <md-button class="md-icon-button" ng-click="cancel()">
+                    <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
+                </md-button>
+            </div>
+        </md-toolbar>
+        <md-dialog-content flex layout-padding layout-wrap>
+            <div layout="row" layout-wrap flex>
+                <!-- Name -->
+                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
+                    <label>Name</label>
+                    <input type="text" name="UserName" required ng-model="user.name">
+                    <div class="hint" ng-if="showHints">Tell us the new <span ng-if="user.role == 'designer'">designer</span><span ng-if="user.role == 'quality_control'">quality control</span>'s full name!</div>
+                    <div ng-messages="userForm.UserName.$error" ng-if="userForm.UserName.$touched">
+                        <div ng-message="required">Name is required.</div>
+                    </div>
+                </md-input-container>
+                <!-- Role -->
+            </div>
+            <div layout="column" flex>
+                <!-- Email -->
+                <md-input-container class="md-block" flex>
+                    <label>Email</label>
+                    <input type="email" name="Email" required ng-model="user.email" minlength="10" maxlength="100" ng-pattern="/^.+@.+\..+$/" ng-blur="checkDuplicate()">
+                    <div class="pattern" ng-if="duplicate">Email already in use.</div>
+                    <div class="hint" ng-if="showHints && !duplicate">How can we reach him/her?</div>
+                    <div ng-messages="userForm.Email.$error" ng-if="userForm.Email.$touched">
+                        <div ng-message-exp="['required', 'minlength', 'maxlength', 'pattern']">Your email must be between 10 and 100 characters long and look like an e-mail address.</div>
+                    </div>
+                </md-input-container>
+            </div>
+            <div layout="row" flex layout-wrap>            
+                <!-- Password -->
+                <md-input-container class="md-block" flex="100" flex-gt-sm="50">
+                    <label>Password</label>
+                    <input type="password" name="Password" required ng-model="user.password" ng-minlength="8">
+                    <div class="pattern" ng-if="userForm.Password.$touched && userForm.confirmPassword.$touched && user.password != user.confirm">Passwords doesn't match.</div>
+                    <div class="hint" ng-if="showHints">Password must be at least 8 characters.</div>
+                    <div ng-messages="userForm.Password.$error" ng-if="userForm.Password.$touched">
+                        <div ng-message="required">Password is required.</div>
+                        <div ng-message="minlength">Password must be at least 8 characters.</div>
+                    </div>
+                </md-input-container>
+                <!-- Confirm -->
+                <md-input-container class="md-block" flex="100" flex-gt-sm="50">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirmPassword" required ng-model="user.confirm" ng-minlength="8">
+                    <div class="pattern" ng-if="userForm.Password.$touched && userForm.confirmPassword.$touched && user.password != user.confirm">Passwords doesn't match.</div>
+                    <div ng-messages="userForm.confirmPassword.$error" ng-if="userForm.confirmPassword.$touched">
+                        <div ng-message="required">Confirm password is required.</div>
+                        <div ng-message="minlength">Confirm password must be at least 8 characters.</div>
+                    </div>
+                </md-input-container>
+            </div>
+        </md-dialog-content>
+    </form>
+    <div layout="row" layout-align="end center">   
+        <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
+            Create
+        </md-button>
+        <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
+    </div>
+</md-dialog>

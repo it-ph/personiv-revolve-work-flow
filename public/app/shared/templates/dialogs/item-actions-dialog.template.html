@@ -1,0 +1,17 @@
+<md-dialog flex-gt-sm="20">
+	<md-dialog-content>
+	    <md-subheader>{{type.name}}</md-subheader>
+	    <md-list ng-cloak>
+	        <md-list-item flex ng-repeat="item in type.item_menu">
+	            <md-button flex ng-click="action($index)">
+			        <div layout="row" flex>
+		                <md-icon class="mdi {{item.icon}} grey"></md-icon>
+		                <span flex="5"></span>
+		                <span class="md-inline-list-icon-label">{{ item.label }}</span>
+		                <span flex></span>
+			        </div>
+	            </md-button>
+	        </md-list-item>
+	    </md-list>
+	</md-dialog-content>
+</md-dialog>

@@ -1,0 +1,21 @@
+body{
+	font-family: 'Roboto', sans-serif;
+	overflow: hidden;
+    background: #e9ebee;
+}
+
+a{
+
+    &:hover{
+        text-decoration: none;
+        color: $main-text;
+    }
+    &:focus{
+        text-decoration: none;
+        color: $main-text;
+    }
+}
+
+md-nav-bar{
+    overflow: auto;
+}
