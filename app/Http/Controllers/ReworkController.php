@@ -48,17 +48,22 @@ class ReworkController extends Controller
             'reworks' => 'required',
         ]);
 
-        $task = Task::where('id', $request->id)->first();
-
-        $task->status = 'rework';
-
-        $task->save();
-
         $previous = array_last($request->reworks, function($value){
             return $value;
         });
 
         $previous = Rework::where('id', $previous['id'])->first();
+
+        if($previous->quality_control_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
+        $task = Task::where('id', $request->id)->first();
+
+        $task->status = 'rework';
+
+        $task->save();
 
         $previous->quality_control_time_end = Carbon::now();
 
@@ -143,13 +148,19 @@ class ReworkController extends Controller
             return $value;
         });
 
+        $rework = Rework::where('id', $rework['id'])->first();
+
+        if($rework->quality_control_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'complete';
 
         $task->save();
 
-        $rework = Rework::where('id', $rework['id'])->first();
 
         $rework->quality_control_time_end = Carbon::now();
 
@@ -188,13 +199,13 @@ class ReworkController extends Controller
             return $value;
         });
 
+        $rework = Rework::where('id', $rework['id'])->first();
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'in_progress';
 
         $task->save();
-
-        $rework = Rework::where('id', $rework['id'])->first();
 
         $rework->quality_control_id = $request->user()->id;
         
@@ -272,13 +283,19 @@ class ReworkController extends Controller
             return $value;
         });
 
+        $rework = Rework::where('id', $rework['id'])->first();
+
+        if($rework->designer_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'in_progress';
 
         $task->save();
 
-        $rework = Rework::where('id', $rework['id'])->first();
 
         $rework->designer_time_start = Carbon::now();
 
