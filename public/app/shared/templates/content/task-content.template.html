@@ -134,7 +134,7 @@
                     Complete
                 </md-button>
             </div>
-            <div ng-if="task.status == 'rework' && user.role == 'designer' && task.reworks.length && authorized_designer_id == user.id">
+            <div ng-if="task.status == 'rework' && user.role == 'designer' && task.reworks.length && authorized_designer_id == user.id && !task.reworks[task.reworks.length-1].designer_time_start">
                 <md-button aria-label="Revision Start" ng-click="revision()">
                     Revision Start
                 </md-button>

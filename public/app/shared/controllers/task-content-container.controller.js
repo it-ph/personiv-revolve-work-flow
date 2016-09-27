@@ -454,9 +454,11 @@ sharedModule
 
 			Task.enlist(query)
 				.success(function(data){
-					$scope.unauthorized = false;
+					$scope.unauthorized = $scope.user.role == 'designer' ? true : false;
 					if(data.designer_assigned)
 					{
+						$scope.unauthorized = false;
+						
 						if(data.designer_assigned.designer.id != $scope.user.id && $scope.user.role == 'designer')
 						{
 							$scope.unauthorized = true;

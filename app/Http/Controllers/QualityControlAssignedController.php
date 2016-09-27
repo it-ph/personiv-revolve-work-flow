@@ -46,13 +46,18 @@ class QualityControlAssignedController extends Controller
             'designer_assigned.designer_id' => 'required|numeric',
         ]);
 
+        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
+            
+        if($quality_control_assigned->quality_control_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'rework';
 
         $task->save();
-
-        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
 
         $quality_control_assigned->time_end = Carbon::now();
 
@@ -96,13 +101,18 @@ class QualityControlAssignedController extends Controller
             'designer_assigned.designer_id' => 'required|numeric',
         ]);
 
+        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
+        
+        if($quality_control_assigned->quality_control_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'complete';
 
         $task->save();
-
-        $quality_control_assigned = QualityControlAssigned::where('id', $request->input('quality_control_assigned.id'))->first();
 
         $quality_control_assigned->time_end = Carbon::now();
 

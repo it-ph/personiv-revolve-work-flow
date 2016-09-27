@@ -112,13 +112,19 @@ class DesignerAssignedController extends Controller
             'designer_assigned.id' => 'required|numeric',
         ]);
 
+        $designer_assigned = DesignerAssigned::where('id', $request->input('designer_assigned.id'))->first();
+        
+        if($designer_assigned->designer_id != $request->user()->id)
+        {
+            abort(403, 'Unauthorized action.');
+        }
+
         $task = Task::where('id', $request->id)->first();
 
         $task->status = 'in_progress';
 
         $task->save();
 
-        $designer_assigned = DesignerAssigned::where('id', $request->input('designer_assigned.id'))->first();
 
         $designer_assigned->time_start = Carbon::now();
 
