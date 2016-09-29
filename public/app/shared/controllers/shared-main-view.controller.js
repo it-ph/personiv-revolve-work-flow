@@ -94,7 +94,7 @@ sharedModule
 							.success(function(data){
 								formatNotification(data);
 								$scope.user = data;
-								$state.go('main.sheet', {'sheetID': notif.data.attachment.id});
+								$state.go('main.tracker');
 							})
 					}
 				}

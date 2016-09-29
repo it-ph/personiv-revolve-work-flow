@@ -240,10 +240,10 @@ sharedModule
 
 			if($scope.subheader.currentNavItem)
 			{
-				$scope.subheader.currentNavItem = today.getDay() ? $scope.subheader.navs[today.getDay() -1].label : $scope.subheader.navs[6].label;
+				$scope.subheader.currentNavItem = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1].label : $scope.subheader.navs[6].label;
 
 				/* Sets up the page for what tab it is*/
-				var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+				var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
 
 				setInit(nav);
 			}		
@@ -257,7 +257,7 @@ sharedModule
 		    return day === 1;
 		};
 
-		var today = new Date();
+		$scope.today = new Date();
 
 		var pushItem = function(item){
 			item.first_letter = item.file_name.charAt(0).toUpperCase();
@@ -390,7 +390,7 @@ sharedModule
 				})
 		}
 
-		var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+		var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
 		
 		$scope.subheader.currentNavItem = nav.label;
 

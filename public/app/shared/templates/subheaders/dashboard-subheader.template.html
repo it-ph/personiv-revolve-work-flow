@@ -6,7 +6,7 @@
 <!-- Icons -->
 <md-subheader layout="row" flex>
     <div layout="row">
-        <md-datepicker ng-model="date_start" md-placeholder="Week Start" md-min-date="minDate" md-max-date="maxDate" md-date-filter="mondaysOnly" ng-change="fetchDays(date_start)"></md-datepicker>
+        <md-datepicker ng-model="date_start" md-placeholder="Week Start" md-min-date="minDate" md-max-date="today" md-date-filter="mondaysOnly" ng-change="fetchDays(date_start)"></md-datepicker>
     </div>
     <!-- Refresh -->
 	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple">
@@ -21,7 +21,7 @@
         </md-button>
         <md-menu-content width="6">
             <md-subheader>Category</md-subheader>
-            <md-menu-item ng-repeat="item in categories">
+            <md-menu-item ng-repeat="item in categories | orderBy:'name'">
                 <md-button aria-label="{{item.name}}" flex ng-click="subheader.setCategoryFilter(item.name)">
                     <div layout="row">
                         <span>{{item.name}}</span>
@@ -31,7 +31,7 @@
                 </md-button>
             </md-menu-item>
             <md-subheader>Client</md-subheader>
-            <md-menu-item ng-repeat="item in clients">
+            <md-menu-item ng-repeat="item in clients | orderBy:'name'">
                 <md-button aria-label="{{item.name}}" flex ng-click="subheader.setClientFilter(item.name)">
                     <div layout="row">
                         <span>{{item.name}}</span>
