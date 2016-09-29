@@ -21,7 +21,7 @@
         </md-button>
         <md-menu-content width="6">
             <md-subheader>Category</md-subheader>
-            <md-menu-item ng-repeat="item in categories">
+            <md-menu-item ng-repeat="item in categories | orderBy:'name'">
                 <md-button aria-label="{{item.name}}" flex ng-click="subheader.setCategoryFilter(item.name)">
                     <div layout="row">
                         <span>{{item.name}}</span>
@@ -31,7 +31,7 @@
                 </md-button>
             </md-menu-item>
             <md-subheader>Client</md-subheader>
-            <md-menu-item ng-repeat="item in clients">
+            <md-menu-item ng-repeat="item in clients | orderBy:'name'">
                 <md-button aria-label="{{item.name}}" flex ng-click="subheader.setClientFilter(item.name)">
                     <div layout="row">
                         <span>{{item.name}}</span>

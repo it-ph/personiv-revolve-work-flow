@@ -15,7 +15,7 @@
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Designer</label>
                     <md-select name="Designer" required ng-model="designer" ng-change="setDesigner()">
-                        <md-option ng-repeat="user in users" value="{{user.id}}">{{user.name}}</md-option>
+                        <md-option ng-repeat="user in users | orderBy:'name'" value="{{user.id}}">{{user.name}}</md-option>
                     </md-select>
                     <div ng-messages="assignTaskForm.Designer.$error" ng-if="assignTaskForm.Designer.$touched">
                         <div ng-message="required">Designer is required.</div>
