@@ -6,7 +6,7 @@
 <!-- Icons -->
 <md-subheader layout="row" flex>
     <div layout="row">
-        <md-datepicker ng-model="date_start" md-placeholder="Week Start" md-min-date="minDate" md-max-date="maxDate" md-date-filter="mondaysOnly" ng-change="fetchDays(date_start)"></md-datepicker>
+        <md-datepicker ng-model="date_start" md-placeholder="Week Start" md-min-date="minDate" md-max-date="today" md-date-filter="mondaysOnly" ng-change="fetchDays(date_start)"></md-datepicker>
     </div>
     <!-- Refresh -->
 	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple">

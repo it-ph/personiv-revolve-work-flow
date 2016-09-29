@@ -3,6 +3,7 @@ sharedModule
 		$scope.date = {};
 		$scope.date.start = new Date();
 		$scope.date.end = new Date();
+		$scope.today = new Date();
 
 		$scope.cancel = function(){
 			$mdDialog.cancel();

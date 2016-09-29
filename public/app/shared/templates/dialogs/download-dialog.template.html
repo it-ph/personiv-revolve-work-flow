@@ -24,11 +24,12 @@
                 <!-- Date End -->
                 <div layout-padding flex>
                     <h4>Date End</h4>
-                    <md-datepicker name="DateEnd" ng-model="date.end" md-placeholder="Date end" md-min-date="date.start" required ></md-datepicker>
+                    <md-datepicker name="DateEnd" ng-model="date.end" md-placeholder="Date end" md-min-date="date.start" md-max-date="today" required ></md-datepicker>
                     <div class="validation-messages" ng-messages="downloadForm.DateEnd.$error">
                         <div ng-message="valid">The entered value is not a date!</div>
                         <div ng-message="required">Date end is required</div>
                         <div ng-message="mindate">Date end cannot be earlier than date start</div>
+                        <div ng-message="maxdate">Date end cannot be later than today</div>
                     </div>
                 </div>
             </div>
