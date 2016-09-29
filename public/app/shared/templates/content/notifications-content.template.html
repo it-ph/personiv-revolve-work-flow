@@ -1,6 +1,6 @@
 <div infinite-scroll='notification.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="notification.busy" infinite-scroll-parent ng-if="notification.show">
 	<md-list>
-		<md-list-item class="md-3-line md-long-text" ng-repeat="notification in notification.items | filter: toolbar.searchText" ui-sref="main.task({taskID:notification.task_id})">
+		<md-list-item class="md-3-line md-long-text" ng-repeat="notification in notification.items | filter: toolbar.searchText" ng-if="notification.type != 'App\\Notifications\\SpreadsheetCreated'" ui-sref="main.task({taskID:notification.task_id})">
 			<h2 class="md-headline primary-bg md-avatar" layout="row" layout-align="center center">
 	            <span class="white-text">{{ notification.first_letter }}</span>
 	        </h2>

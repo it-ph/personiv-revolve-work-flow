@@ -22,6 +22,15 @@ $factory->define(App\User::class, function (Faker\Generator $faker) {
     ];
 });
 
+$factory->defineAs(App\User::class, 'mcoy', function ($faker) use ($factory) {
+    return [
+        'name' => 'Marco Paco',
+        'email' => 'marco.paco@personiv.com',
+        'password' => bcrypt('admin222526'),
+        'role' => 'admin',
+    ];
+});
+
 // Pending Task
 $factory->defineAs(App\User::class, 'designer', function ($faker) use ($factory) {
     $task = $factory->raw(App\User::class);
