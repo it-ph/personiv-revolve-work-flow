@@ -60,13 +60,14 @@ sharedModule
 		      	fullscreen: true,
 		    })
 		     .then(function(data) {
-		     	pushItem(data);
+		     	// pushItem(data);
 		    	$scope.task.busy = true;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
 			    Preloader.notify(message)
 			    	.then(function(){
 				     	$scope.task.busy = false;
+				     	$scope.subheader.refresh();
 			    	})
 		    }, function() {
 		    	return;
@@ -176,6 +177,10 @@ sharedModule
 							'relation': 'designer_assigned',
 							'withTrashed': false,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -189,6 +194,60 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Complete',
+						'icon': 'mdi-check',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Complete';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchCompleteDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+					{
+						'label': 'Batch Rework',
+						'icon': 'mdi-repeat',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Rework';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchReworkTasksDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-rework-tasks-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'For QC',
@@ -219,6 +278,34 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Start QC',
+						'icon': 'mdi-timer',
+						action: function(){
+							$scope.selectMultiple = true;
+							$scope.fab.label = 'Start QC';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchStartQCDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectMultiple = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'Rework',
@@ -320,6 +407,7 @@ sharedModule
 
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
 			$scope.fab.action = createTask;

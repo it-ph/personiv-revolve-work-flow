@@ -42,6 +42,14 @@ sharedModule
 			}
 			if(!$scope.busy){
 				$scope.busy = true;
+
+				if($scope.instructions)
+				{
+					angular.forEach($scope.tasks, function(task){
+						task.instructions = $scope.instructions;
+					});
+				}
+
 				DesignerAssigned.store($scope.tasks)
 					.success(function(){
 						Preloader.stop();

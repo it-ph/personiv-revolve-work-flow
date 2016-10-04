@@ -321,10 +321,10 @@ sharedModule
 
 			if($scope.subheader.currentNavItem)
 			{
-				$scope.subheader.currentNavItem = today.getDay() ? $scope.subheader.navs[today.getDay() -1].label : $scope.subheader.navs[6].label;
+				$scope.subheader.currentNavItem = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1].label : $scope.subheader.navs[6].label;
 
 				/* Sets up the page for what tab it is*/
-				var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+				var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
 
 				setInit(nav);
 			}		
@@ -338,7 +338,7 @@ sharedModule
 		    return day === 1;
 		};
 
-		var today = new Date();
+		$scope.today = new Date();
 
 		var pushItem = function(item){
 			item.first_letter = item.file_name.charAt(0).toUpperCase();
@@ -471,7 +471,7 @@ sharedModule
 				})
 		}
 
-		var nav = today.getDay() ? $scope.subheader.navs[today.getDay() -1] : $scope.subheader.navs[6];
+		var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
 		
 		$scope.subheader.currentNavItem = nav.label;
 
@@ -566,6 +566,20 @@ sharedModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\TaskUpdated'){
+					notif.message = 'updated a task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
 				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
 					notif.message = 'created a new sheet.';
 					notif.action = function(id){
@@ -574,7 +588,7 @@ sharedModule
 							.success(function(data){
 								formatNotification(data);
 								$scope.user = data;
-								$state.go('main.sheet', {'sheetID': notif.data.attachment.id});
+								$state.go('main.tracker');
 							})
 					}
 				}
@@ -748,6 +762,13 @@ sharedModule
 				    channel.user.bind('App\\Events\\PusherTaskCreated', function(data) {
 				    	fetchUnreadNotifications();
 				    	var message = data.sender.name + ' created a new task.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskUpdated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' updated a task.';
 				    	Preloader.newNotification(message);
 						$scope.$broadcast('refresh');
 				    }),
@@ -1218,6 +1239,24 @@ sharedModule
 			$scope.init();
 		});
 
+		$scope.fab = {};
+		$scope.fab.label = 'Edit';
+		$scope.fab.icon = 'mdi-pencil';
+		$scope.fab.action = function(){
+			Preloader.set(taskID);
+			$mdDialog.show({
+		      	controller: 'editTaskDialogController',
+		      	templateUrl: '/app/components/admin/templates/dialogs/create-task-dialog.template.html',
+		      	parent: angular.element(document.body),
+		      	fullscreen: true,
+		    })
+		    .then(function(){
+		    	$scope.init();
+		    }, function(){
+		    	return;
+		    })
+		}
+
 		/* Designer actions */
 		// check the user if he has pending works before executing this
 		$scope.start = function()
@@ -1645,17 +1684,22 @@ sharedModule
 				],
 			};
 
-			User.pending()
+			// User.pending()
+			// 	.success(function(data){
+			// 		if(!data)
+			// 		{
+			// 			$scope.hasPending = false;	
+			// 		}
+			// 		else{
+			// 			$scope.current = data;
+			// 			$scope.hasPending = data == taskID ? false: true;
+			// 		}
+			// 	})
+
+			User.check()
 				.success(function(data){
-					if(!data)
-					{
-						$scope.hasPending = false;	
-					}
-					else{
-						$scope.current = data;
-						$scope.hasPending = data == taskID ? false: true;
-					}
-				})
+					$scope.fab.show = data.role != 'designer' ? true : false;
+				});
 
 			Task.enlist(query)
 				.success(function(data){
@@ -1784,13 +1828,14 @@ sharedModule
 		      	fullscreen: true,
 		    })
 		     .then(function(data) {
-		     	pushItem(data);
+		     	// pushItem(data);
 		    	$scope.task.busy = true;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
 			    Preloader.notify(message)
 			    	.then(function(){
 				     	$scope.task.busy = false;
+				     	$scope.subheader.refresh();
 			    	})
 		    }, function() {
 		    	return;
@@ -1900,6 +1945,10 @@ sharedModule
 							'relation': 'designer_assigned',
 							'withTrashed': false,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -1913,6 +1962,60 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Complete',
+						'icon': 'mdi-check',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Complete';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchCompleteDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+					{
+						'label': 'Batch Rework',
+						'icon': 'mdi-repeat',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Rework';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchReworkTasksDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-rework-tasks-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'For QC',
@@ -1943,6 +2046,34 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Start QC',
+						'icon': 'mdi-timer',
+						action: function(){
+							$scope.selectMultiple = true;
+							$scope.fab.label = 'Start QC';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchStartQCDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectMultiple = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'Rework',
@@ -2044,6 +2175,7 @@ sharedModule
 
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
 			$scope.fab.action = createTask;
@@ -3013,7 +3145,89 @@ sharedModule
 			}
 			if(!$scope.busy){
 				$scope.busy = true;
+
+				if($scope.instructions)
+				{
+					angular.forEach($scope.tasks, function(task){
+						task.instructions = $scope.instructions;
+					});
+				}
+
 				DesignerAssigned.store($scope.tasks)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('batchCompleteDialogController', ['$scope', '$mdDialog', 'Preloader', 'QualityControlAssigned', function($scope, $mdDialog, Preloader, QualityControlAssigned){
+		$scope.tasks = Preloader.get();
+		$scope.busy = false;
+
+		$scope.label = 'Batch Complete';
+		$scope.action = 'Complete';
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if(!$scope.busy){
+				$scope.busy = true;
+
+				var query = {};
+				query.tasks = [];
+				query.batch = true;
+
+				angular.forEach($scope.tasks, function(item){
+					if(item.include)
+					{
+						query.tasks.push(item);
+					}
+				});
+
+				QualityControlAssigned.complete(query)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('batchStartQCDialogController', ['$scope', '$mdDialog', 'Preloader', 'QualityControlAssigned', function($scope, $mdDialog, Preloader, QualityControlAssigned){
+		$scope.tasks = Preloader.get();
+		$scope.busy = false;
+
+		$scope.label = 'Batch For QC';
+		$scope.action = 'For QC';
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if(!$scope.busy){
+				$scope.busy = true;
+
+				var query = {};
+				query.tasks = [];
+				query.batch = true;
+
+				angular.forEach($scope.tasks, function(item){
+					if(item.include)
+					{
+						query.tasks.push(item);
+					}
+				});
+
+				QualityControlAssigned.store(query)
 					.success(function(){
 						Preloader.stop();
 					})
@@ -3179,6 +3393,7 @@ sharedModule
 		$scope.date = {};
 		$scope.date.start = new Date();
 		$scope.date.end = new Date();
+		$scope.today = new Date();
 
 		$scope.cancel = function(){
 			$mdDialog.cancel();
@@ -3304,6 +3519,73 @@ sharedModule
 		}
 	}]);
 sharedModule
+	.controller('editTaskDialogController', ['$scope', '$mdDialog', 'Preloader', 'Category', 'Client', 'Task', function($scope, $mdDialog, Preloader, Category, Client, Task){
+		var urlBase = 'task';
+		var taskID = Preloader.get();
+		
+		$scope.busy = false;
+		$scope.duplicate = false;
+
+		Task.show(taskID)
+			.success(function(data){
+				data.delivery_date = new Date(data.delivery_date);
+				data.live_date = new Date(data.live_date);
+				$scope.task = data;
+			});
+
+		Category.index()
+			.success(function(data){
+				$scope.categories = data;
+			})
+
+		Client.index()
+			.success(function(data){
+				$scope.clients = data;
+			})
+
+		$scope.checkDuplicate = function(){
+			Preloader.checkDuplicate(urlBase, $scope.task)
+				.success(function(data){
+					$scope.duplicate = data;
+				})
+		}
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.taskForm.$invalid){
+				angular.forEach($scope.taskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.duplicate){
+				$scope.busy = true;
+				
+				$scope.task.delivery_date = $scope.task.delivery_date.toDateString();
+				$scope.task.live_date = $scope.task.live_date.toDateString();
+
+				Task.update(taskID, $scope.task)
+					.success(function(data){
+						if(typeof data === 'boolean'){
+							$scope.busy = false;
+							return;
+						}
+
+						Preloader.stop(data);
+					})
+					.error(function(){
+						Preloader.error();
+					});
+			}
+		}
+	}]);
+sharedModule
 	.controller('itemActionsDialogController', ['$scope', '$mdDialog', 'Preloader', function($scope, $mdDialog, Preloader){
 		$scope.type = Preloader.get();
 
@@ -3371,6 +3653,54 @@ sharedModule
 							Preloader.error();
 						});	
 				}
+			}
+		}
+	}]);
+sharedModule
+	.controller('batchReworkTasksDialogController', ['$scope', '$mdDialog', 'Preloader', 'QualityControlAssigned', 'Comment', function($scope, $mdDialog, Preloader, QualityControlAssigned, Comment){
+		$scope.tasks = Preloader.get();
+		$scope.comment = {};
+		$scope.busy = false;
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+		$scope.submit = function(){
+			if($scope.reworkTaskForm.$invalid){
+				angular.forEach($scope.reworkTaskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+			if(!$scope.busy){
+				$scope.busy = true;
+
+				var query = {};
+				query.tasks = [];
+				query.batch = true;
+
+				angular.forEach($scope.tasks, function(task){
+					if(task.include)
+					{
+						query.tasks.push(task);
+					}
+				});
+
+				Comment.store(query)
+					.success(function(){
+						
+					})
+
+				QualityControlAssigned.rework(query)
+					.success(function(){
+						Preloader.stop();
+					})
+					.error(function(){
+						Preloader.error();
+					});
 			}
 		}
 	}]);

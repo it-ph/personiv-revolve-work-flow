@@ -61,6 +61,8 @@ designerModule
 			$scope.init($scope.subheader.current.request);
 		}
 
+		$scope.fab = {};
+
 		/**
 		 * Object for subheader
 		 *
@@ -95,6 +97,32 @@ designerModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch start',
+						'icon': 'mdi-timer',
+						action: function(){
+							$scope.selectMultiple = true;
+							$scope.fab.label = 'Start';
+							$scope.fab.icon = this.icon;
+							$scope.fab.show = true;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchStartTaskDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectMultiple = false;
+							    	$scope.fab.show = false;
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'In Progress',
@@ -112,6 +140,10 @@ designerModule
 							'relation': 'designer_assigned',
 							'withTrashed': false,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
 					],
 					'where': [
 						{
@@ -125,6 +157,32 @@ designerModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch For QC',
+						'icon': 'mdi-timer-off',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'For QC';
+							$scope.fab.icon = this.icon;
+							$scope.fab.show = true;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchForQCDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.show = false;
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'For QC',
@@ -254,6 +312,16 @@ designerModule
 			},
 		];
 
+		$scope.subheader.cancelSelectMultiple = function(){
+			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
+			$scope.fab.show = false;
+
+			angular.forEach($scope.task.items, function(item){
+				item.include = false;
+			});
+		}
+
 		$scope.subheader.refresh = function(){
 			$scope.isLoading = true;
   			$scope.task.show = false;
@@ -314,6 +382,9 @@ designerModule
 		}
 
 		$scope.init = function(request, searched){
+			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
+			
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;

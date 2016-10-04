@@ -6,14 +6,14 @@
 <!-- Icons -->
 <md-subheader layout="row" flex>
     <!-- Cancel Select Multiple -->
-    <md-button ng-if="selectMultiple" class="md-icon-button" ng-click="subheader.cancelSelectMultiple()">
+    <md-button ng-if="selectMultiple || selectForQC" class="md-icon-button" ng-click="subheader.cancelSelectMultiple()">
         <md-icon class="mdi grey mdi-close"></md-icon>
         <md-tooltip hide-xs hide-sm hide-md>Cancel</md-tooltip>
     </md-button>
     
     <span flex></span>
     <!-- Refresh -->
-	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple">
+	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple && !selectForQC">
 		<md-icon class="mdi grey mdi-refresh"></md-icon>
 		<md-tooltip hide-xs hide-sm hide-md>Refresh</md-tooltip>
 	</md-button>

@@ -13,10 +13,13 @@ use App\User;
 use App\DesignerAssigned;
 use Carbon\Carbon;
 use Auth;
+use DB;
 use App\Notifications\TaskCreated;
+use App\Notifications\TaskUpdated;
 use App\Notifications\TaskDeleted;
 use App\Notifications\SpreadsheetCreated;
 use App\Events\PusherTaskCreated;
+use App\Events\PusherTaskUpdated;
 use App\Events\PusherTaskDeleted;
 use App\Events\PusherSpreadsheetCreated;
 use App\Events\Test;
@@ -350,33 +353,36 @@ class TaskController extends Controller
             'category_id' => 'required',
         ]);
 
-        $duplicate = Task::where('file_name', $request->file_name)->first();
+        DB::transaction(function() use ($request){
+            $duplicate = Task::where('file_name', $request->file_name)->first();
 
-        if($duplicate)
-        {
-            return response()->json(true);
-        }
+            if($duplicate)
+            {
+                return response()->json(true);
+            }
 
-        $task = new Task;
+            $task = new Task;
 
-        $task->file_name = $request->file_name;
-        $task->delivery_date = Carbon::parse($request->delivery_date);
-        $task->live_date = Carbon::parse($request->live_date);
-        $task->client_id = $request->client_id;
-        $task->category_id = $request->category_id;
-        $task->status = 'pending';
+            $task->file_name = $request->file_name;
+            $task->instructions = $request->instructions;
+            $task->delivery_date = Carbon::parse($request->delivery_date);
+            $task->live_date = Carbon::parse($request->live_date);
+            $task->client_id = $request->client_id;
+            $task->category_id = $request->category_id;
+            $task->status = 'pending';
 
-        $task->save();
+            $task->save();
 
-        // fetch the users to be notified
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+            // fetch the users to be notified
+            $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
-        foreach ($users as $key => $user) {
-            // save the notifications to database - task, sender
-            $user->notify(new TaskCreated($task, Auth::user()));
-            // broadcast the notifications - task, sender, recipient
-            event(new PusherTaskCreated($task, Auth::user(), $user));
-        }
+            foreach ($users as $key => $user) {
+                // save the notifications to database - task, sender
+                $user->notify(new TaskCreated($task, Auth::user()));
+                // broadcast the notifications - task, sender, recipient
+                event(new PusherTaskCreated($task, Auth::user(), $user));
+            }
+        });
     }
 
     /**
@@ -410,7 +416,43 @@ class TaskController extends Controller
      */
     public function update(Request $request, $id)
     {
-        //
+        $this->validate($request, [
+            'file_name' => 'required',
+            'live_date' => 'required',
+            'live_date' => 'required',
+            'client_id' => 'required',
+            'category_id' => 'required',
+        ]);
+
+        DB::transaction(function() use ($request, $id){
+            $duplicate = Task::where('file_name', $request->file_name)->whereNotIn('id', [$id])->first();
+
+            if($duplicate)
+            {
+                return response()->json(true);
+            }
+
+            $task = Task::where('id', $id)->first();
+
+            $task->file_name = $request->file_name;
+            $task->instructions = $request->instructions;
+            $task->delivery_date = Carbon::parse($request->delivery_date);
+            $task->live_date = Carbon::parse($request->live_date);
+            $task->client_id = $request->client_id;
+            $task->category_id = $request->category_id;
+            
+            $task->save();
+
+            // fetch the users to be notified
+            $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+            foreach ($users as $key => $user) {
+                // save the notifications to database - task, sender
+                $user->notify(new TaskUpdated($task, Auth::user()));
+                // broadcast the notifications - task, sender, recipient
+                event(new PusherTaskUpdated($task, Auth::user(), $user));
+            }
+        });
     }
 
     /**

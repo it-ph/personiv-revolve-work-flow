@@ -22,6 +22,7 @@
             </md-card-title-text>
         </md-card-title>
         <md-card-content>
+            <p>Instructions: <em>{{task.instructions}}</em></p>
             <!-- Desinger -->
             <table class="table">
                 <tr>
@@ -153,7 +154,7 @@
             <md-button ui-sref="main.task({taskID:current})">Current Task</md-button>
             <span class="md-caption secondary-text">*You have an on going task.</span>
         </p>
-        <div ng-if="task.comments.length">
+        <div>
             <md-divider></md-divider>
             <md-subheader class="md-no-sticky">Comments</md-subheader>
             <md-list>
@@ -171,7 +172,7 @@
                     </div>
                 </md-list-item>
             </md-list>
-            <form name="form.commentSection" novalidate flex ng-if="task.comments.length">
+            <form name="form.commentSection" novalidate flex>
                 <div layout="column" flex>            
                     <md-input-container md-no-float class="md-block">
                         <label>Write a comment..</label>
