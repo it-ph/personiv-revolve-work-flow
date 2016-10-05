@@ -43,16 +43,16 @@ class QualityControlAssignedController extends Controller
     {
         if($request->has('batch'))
         {
-            for ($i=0; $i < count($request->tasks); $i++) {
+            for ($i=0; $i < count($request->first_rework); $i++) {
                 DB::transaction(function() use ($request, $i){
-                    $quality_control_assigned = QualityControlAssigned::where('id', $request->tasks[$i]['quality_control_assigned']['id'])->first();
+                    $quality_control_assigned = QualityControlAssigned::where('id', $request->first_rework[$i]['quality_control_assigned']['id'])->first();
 
                     if($quality_control_assigned->quality_control_id != $request->user()->id)
                     {
                         abort(403, 'Unauthorized action.');
                     }
 
-                    $task = Task::where('id', $request->tasks[$i]['id'])->first();
+                    $task = Task::where('id', $request->first_rework[$i]['id'])->first();
 
                     $task->status = 'rework';
 
@@ -68,7 +68,7 @@ class QualityControlAssignedController extends Controller
 
                     $rework->task_id = $task->id;
 
-                    $rework->designer_id = $request->tasks[$i]['designer_assigned']['id'];
+                    $rework->designer_id = $request->first_rework[$i]['designer_assigned']['designer_id'];
 
                     $rework->save();
 
@@ -81,7 +81,7 @@ class QualityControlAssignedController extends Controller
                         event(new PusherTaskRework($task, Auth::user(), $user));
                     }
 
-                    $designer = User::where('id', $request->tasks[$i]['designer_assigned']['id'])->first();
+                    $designer = User::where('id', $request->first_rework[$i]['designer_assigned']['designer_id'])->first();
 
                     $designer->notify(new NotifyDesignerForTaskRework($task, Auth::user()));
                     event(new PusherNotifyDesignerForTaskRework($task, Auth::user(), $designer));

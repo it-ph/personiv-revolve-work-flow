@@ -1949,6 +1949,20 @@ sharedModule
 							'relation': 'quality_control_assigned',
 							'withTrashed': false,
 						},
+						{
+							'relation': 'reworks',
+							'withTrashed': false,
+							'with': [
+								{
+									'relation' : 'designer',
+									'withTrashed': true,
+								},
+								{
+									'relation' : 'quality_control',
+									'withTrashed': true,
+								},
+							]
+						},
 					],
 					'where': [
 						{
@@ -1999,7 +2013,7 @@ sharedModule
 							$scope.fab.action = function(){
 								Preloader.set($scope.task.items);
 								$mdDialog.show({
-							      	controller: 'batchReworkTasksDialogController',
+							      	controller: 'batchReworkDialogController',
 							      	templateUrl: '/app/shared/templates/dialogs/batch-rework-tasks-dialog.template.html',
 							      	parent: angular.element(document.body),
 							      	fullscreen: true,
@@ -2030,8 +2044,26 @@ sharedModule
 							'withTrashed': true,
 						},
 						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
 							'relation': 'quality_control_assigned',
 							'withTrashed': false,
+						},
+						{
+							'relation': 'reworks',
+							'withTrashed': false,
+							'with': [
+								{
+									'relation' : 'designer',
+									'withTrashed': true,
+								},
+								{
+									'relation' : 'quality_control',
+									'withTrashed': true,
+								},
+							]
 						},
 					],
 					'where': [
@@ -2051,7 +2083,7 @@ sharedModule
 						'label': 'Batch Start QC',
 						'icon': 'mdi-timer',
 						action: function(){
-							$scope.selectMultiple = true;
+							$scope.selectForQC = true;
 							$scope.fab.label = 'Start QC';
 							$scope.fab.icon = this.icon;
 							$scope.fab.action = function(){
@@ -2063,7 +2095,33 @@ sharedModule
 							      	fullscreen: true,
 							    })
 							    .then(function(){
-							    	$scope.selectMultiple = false;
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+					{
+						'label': 'Batch QC Start Revised',
+						'icon': 'mdi-timelapse',
+						action: function(){
+							$scope.selectRework = true;
+							$scope.fab.label = 'QC Start Revised';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchQCStartRevisedDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectRework = false;
 							    	$scope.fab.label = 'Task';
 									$scope.fab.icon = 'mdi-plus';
 									$scope.fab.action = createTask;
@@ -2176,6 +2234,7 @@ sharedModule
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
 			$scope.selectForQC = false;
+			$scope.selectRework = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
 			$scope.fab.action = createTask;
@@ -2245,6 +2304,9 @@ sharedModule
 		}
 
 		$scope.init = function(request, searched){
+			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
+			$scope.selectRework = false;
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;
@@ -2276,7 +2338,7 @@ sharedModule
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.task.page = 2;
 
-			Task.paginate(request)
+			Task.enlist(request)
 				.success(function(data){
 					if(!data)
 					{
@@ -2316,7 +2378,7 @@ sharedModule
 						$scope.task.busy = true;
 						$scope.isLoading = true;
 						// Calls the next page of pagination.
-						Task.paginate(request, $scope.task.page)
+						Task.enlist(request, $scope.task.page)
 							.success(function(data){
 								// increment the page to set up next page for next AJAX Call
 								$scope.task.page++;
@@ -3164,12 +3226,69 @@ sharedModule
 		}
 	}]);
 sharedModule
-	.controller('batchCompleteDialogController', ['$scope', '$mdDialog', 'Preloader', 'QualityControlAssigned', function($scope, $mdDialog, Preloader, QualityControlAssigned){
+	.controller('batchCompleteDialogController', ['$scope', '$mdDialog', 'Preloader', 'QualityControlAssigned', 'Rework', function($scope, $mdDialog, Preloader, QualityControlAssigned, Rework){
 		$scope.tasks = Preloader.get();
 		$scope.busy = false;
 
 		$scope.label = 'Batch Complete';
 		$scope.action = 'Complete';
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if(!$scope.busy){
+				$scope.busy = true;
+
+				var query = {};
+				query.tasks = [];
+				query.reworks = [];
+				query.batch = true;
+
+				angular.forEach($scope.tasks, function(item){
+					if(item.include && !item.reworks.length)
+					{
+						query.tasks.push(item);
+					}
+					else if(item.include && item.reworks.length)
+					{
+						query.reworks.push(item);
+					}
+				});
+
+				if(query.tasks.length)
+				{
+					QualityControlAssigned.complete(query)
+						.success(function(){
+							Preloader.stop();
+						})
+						.error(function(){
+							Preloader.error();
+						});
+				}
+
+				if(query.reworks.length)
+				{
+					Rework.complete(query)
+						.success(function(){
+							Preloader.stop();
+						})
+						.error(function(){
+							Preloader.error();
+						});
+				}
+
+			}
+		}
+	}]);
+sharedModule
+	.controller('batchQCStartRevisedDialogController', ['$scope', '$mdDialog', 'Preloader', 'Rework', function($scope, $mdDialog, Preloader, Rework){
+		$scope.tasks = Preloader.get();
+		$scope.busy = false;
+
+		$scope.label = 'Batch QC Start Revised';
+		$scope.action = 'QC Start Revised';
 
 		$scope.cancel = function(){
 			$mdDialog.cancel();
@@ -3190,13 +3309,93 @@ sharedModule
 					}
 				});
 
-				QualityControlAssigned.complete(query)
+				Rework.startQC(query)
 					.success(function(){
 						Preloader.stop();
 					})
 					.error(function(){
 						Preloader.error();
 					});
+			}
+		}
+	}]);
+sharedModule
+	.controller('batchReworkDialogController', ['$scope', '$mdDialog', 'Preloader', 'Comment', 'QualityControlAssigned', 'Rework', function($scope, $mdDialog, Preloader, Comment, QualityControlAssigned, Rework){
+		$scope.tasks = Preloader.get();
+		$scope.comment = {};
+		$scope.busy = false;
+
+		$scope.label = 'Batch Rework';
+		$scope.action = 'Rework';
+
+		$scope.cancel = function(){
+			$mdDialog.cancel();
+		}
+
+		$scope.submit = function(){
+			if($scope.reworkTaskForm.$invalid){
+				angular.forEach($scope.reworkTaskForm.$error, function(field){
+					angular.forEach(field, function(errorField){
+						errorField.$setTouched();
+					});
+				});
+
+				return;
+			}
+
+			if(!$scope.busy){
+				$scope.busy = true;
+
+				var query = {};
+				query.tasks = [];
+				query.first_rework = [];
+				query.rework_again = [];
+				query.batch = true;
+
+				angular.forEach($scope.tasks, function(item){
+					if(item.include)
+					{
+						item.message = $scope.comment.message;
+						if(item.quality_control_assigned.time_end)
+						{
+							item.rework = true;
+							query.rework_again.push(item);
+						}
+						else{
+							query.first_rework.push(item);
+						}
+
+						query.tasks.push(item);
+					}
+				});
+
+				Comment.store(query)
+					.success(function(){
+
+						if(query.first_rework.length)
+						{
+							QualityControlAssigned.rework(query)
+								.success(function(){
+									Preloader.stop();
+								})
+								.error(function(){
+									Preloader.error();
+								});
+						}
+						
+						if(query.rework_again.length)
+						{
+							Rework.rework(query)
+								.success(function(){
+									Preloader.stop();
+								})
+								.error(function(){
+									Preloader.error();
+								});
+						}
+					});
+
+
 			}
 		}
 	}]);

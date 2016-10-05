@@ -5,7 +5,7 @@
 }
 
 .accent-text {
-	/* Deep Purple */
+	/* Pink */
 	color: $accent;
 }
 
@@ -130,6 +130,13 @@ md-content.dirty-white{
 	background: $orange500;
 }
 
+.purple-bg{
+	background: $purple500;
+}
+
+.grey-bg{
+	background: $grey500;
+}
 
 .blur-white{
 	background: rgba(white,0.1);

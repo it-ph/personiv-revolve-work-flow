@@ -14,7 +14,8 @@
                 <!-- Comment -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
                     <label>Comment</label>
-                    <textarea name="Comment" ng-model="comment.message"></textarea>
+                    <textarea name="Comment" ng-model="comment.message" required></textarea>
+                    <div class="hint" ng-if="!reworkTaskForm.Comment.$touched">Tell the designer how can he/she improve this task.</div>
                     <div ng-messages="reworkTaskForm.Comment.$error" ng-if="reworkTaskForm.Comment.$touched">
                         <div ng-message="required">Comment is required.</div>
                     </div>

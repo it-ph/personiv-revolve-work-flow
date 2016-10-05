@@ -246,6 +246,40 @@ class DesignerAssignedController extends Controller
             if(count($this->withTask))
             {
                 for ($i=0; $i < count($this->withTask); $i++) {
+                     // Manually created this because of looping issue
+                    if($this->withTask[$i]['relation'] == 'designer_assigned')
+                    {
+                        $query->with([$this->withTask[$i]['relation'] => function($query){ 
+                            $query->with(['designer' => function($query){
+                                $query->withTrashed();
+                            }]);
+                        }]);
+
+                        continue;
+                    }
+                    else if($this->withTask[$i]['relation'] == 'quality_control_assigned')
+                    {
+                         $query->with([$this->withTask[$i]['relation'] => function($query){ 
+                            $query->with(['quality_control' => function($query){
+                                $query->withTrashed();
+                            }]);
+                        }]);
+
+                        continue;
+                    }
+                    else if($this->withTask[$i]['relation'] == 'reworks')
+                    {
+                        $query->with([$this->withTask[$i]['relation'] => function($query){ 
+                            $query->with(['designer' => function($query){
+                                $query->withTrashed();
+                            }])->with(['quality_control' => function($query){
+                                $query->withTrashed();
+                            }])->orderBy('created_at');
+                        }]);
+
+                        continue;
+                    }
+
                     // if relation does not include deleted records
                     if(!$this->withTask[$i]['withTrashed'])
                     {

@@ -1,7 +1,7 @@
 <div infinite-scroll='task.paginateLoad()' infinite-scroll-distance="1" infinite-scroll-disabled="task.busy" infinite-scroll-parent ng-if="task.show">
 	<md-list>
-		<md-list-item ng-if="(!selectMultiple && !selectForQC) && (showInactive || !task.deleted_at)" class="md-3-line md-long-text" ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ui-sref="main.task({taskID:task.id})">
-			<h2 class="md-avatar" ng-class="task.designer_assigned ? 'orange-bg': (task.deleted_at ? 'accent-bg' : 'primary-bg')" layout="row" layout-align="center center">
+		<md-list-item ng-if="(!selectMultiple && !selectForQC && !selectRework) && (showInactive || !task.deleted_at)" class="md-3-line md-long-text" ng-repeat="task in task.items | filter:{category:categoryFilter} | filter:{client:clientFilter}  | filter: toolbar.searchText | orderBy:sortType:sortReverse" ui-sref="main.task({taskID:task.id})">
+			<h2 class="md-avatar" ng-class="task.designer_assigned && !task.quality_control_assigned ? 'orange-bg': (task.deleted_at ? 'accent-bg' : (task.quality_control_assigned && !task.reworks.length ? 'purple-bg' : (task.reworks.length ? 'grey-bg' : 'primary-bg')))" layout="row" layout-align="center center">
 				<span class="md-headline white-text">{{task.first_letter}}</span>
 			</h2>
 			<div class="md-list-item-text">
@@ -11,6 +11,10 @@
 				<p>
 					<span class="md-caption">Delivery date: {{task.delivery_date | date:'MMM dd, yyyy'}}</span> |
 					<span class="md-caption">Live date: {{task.live_date | date:'MMM dd, yyyy'}}</span> |
+					<span class="md-caption" ng-if="task.designer_assigned && !task.reworks.length">Designer: {{task.designer_assigned.designer.name}} |</span>
+					<span class="md-caption" ng-if="task.quality_control_assigned && !task.reworks.length">QC: {{task.quality_control_assigned.quality_control.name}} |</span>
+					<span class="md-caption" ng-if="task.reworks.length">Designer: {{task.reworks[task.reworks.length-1].designer.name}} |</span>
+					<span class="md-caption" ng-if="task.reworks.length">QC: {{task.reworks[task.reworks.length-1].quality_control.name}} |</span>
 					<span class="md-caption">Last updated: {{task.updated_at | date:'MMM dd, yyyy, hh:mma'}}</span> |
 					<span class="md-caption" ng-if="task.deleted_at">Date deleted: {{task.deleted_at | date:'MMM dd, yyyy, hh:mma'}}</span>
 				</p>
@@ -25,8 +29,8 @@
 			</md-button> -->
 		</md-list-item>
 		<!-- Select Multiple -->
-		<md-list-item ng-if="(selectMultiple && !task.deleted_at) || (selectForQC && task.quality_control_assigned && user.role!='designer') || (selectForQC && !task.quality_control_assigned && user.role=='designer')" class="md-3-line md-long-text" ng-repeat="task in task.items | filter: toolbar.searchText | orderBy:sortType:sortReverse">
-			<h2 class="md-avatar" ng-class="task.designer_assigned ? 'orange-bg': (task.deleted_at ? 'accent-bg' : 'primary-bg')" layout="row" layout-align="center center">
+		<md-list-item ng-if="(selectMultiple && !task.deleted_at) || (selectForQC && task.designer_assigned.time_end && !task.quality_control_assigned && user.role!='designer' && !task.reworks.length) || (selectForQC && task.quality_control_assigned && user.role!='designer' && !task.reworks.length) || (selectForQC && !task.quality_control_assigned && user.role=='designer') || (selectRework && task.quality_control_assigned.time_end && !task.reworks[task.reworks.length-1].quality_control_id) || (selectForQC && user.role!='designer' && task.reworks[task.reworks.length-1].quality_control_time_start)" class="md-3-line md-long-text" ng-repeat="task in task.items | filter: toolbar.searchText | orderBy:sortType:sortReverse">
+			<h2 class="md-avatar" ng-class="task.designer_assigned && !task.quality_control_assigned ? 'orange-bg': (task.deleted_at ? 'accent-bg' : (task.quality_control_assigned && !task.reworks.length ? 'purple-bg' : (task.reworks.length ? 'grey-bg' : 'primary-bg')))" layout="row" layout-align="center center">
 				<span class="md-headline white-text">{{task.first_letter}}</span>
 			</h2>
 			<div class="md-list-item-text">
@@ -35,6 +39,10 @@
 				<p>
 					<span class="md-caption">Delivery date: {{task.delivery_date | date:'MMM dd, yyyy'}}</span> |
 					<span class="md-caption">Live date: {{task.live_date | date:'MMM dd, yyyy'}}</span> |
+					<span class="md-caption" ng-if="task.designer_assigned && !task.reworks.length">Designer: {{task.designer_assigned.designer.name}} |</span>
+					<span class="md-caption" ng-if="task.quality_control_assigned && !task.reworks.length">QC: {{task.quality_control_assigned.quality_control.name}} |</span>
+					<span class="md-caption" ng-if="task.reworks.length">Designer: {{task.reworks[task.reworks.length-1].designer.name}} |</span>
+					<span class="md-caption" ng-if="task.reworks.length">QC: {{task.reworks[task.reworks.length-1].quality_control.name}} |</span>
 					<span class="md-caption">Last updated: {{task.updated_at | date:'MMM dd, yyyy, hh:mma'}}</span> |
 					<span class="md-caption" ng-if="task.deleted_at">Date deleted: {{task.deleted_at | date:'MMM dd, yyyy, hh:mma'}}</span>
 				</p>
