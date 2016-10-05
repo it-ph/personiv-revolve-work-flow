@@ -2,7 +2,7 @@
     <form name="taskForm">
         <md-toolbar >
             <div class="md-toolbar-tools">
-                <h2 class="white-text">New task</h2>
+                <h2 class="white-text">Task</h2>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="cancel()">
                     <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
@@ -19,6 +19,13 @@
                     <div ng-messages="taskForm.FileName.$error" ng-if="taskForm.FileName.$touched">
                         <div ng-message="required">File name is required.</div>
                     </div>
+                </md-input-container>
+            </div>
+            <div>
+                <!-- Instructions -->
+                <md-input-container class="md-block" flex>
+                    <label>Instructions</label>
+                    <textarea type="text" name="Instructions" ng-model="task.instructions"></textarea>
                 </md-input-container>
             </div>
             <div layout="row" layout-wrap flex>
@@ -69,7 +76,7 @@
     </form>
     <div layout="row" layout-align="end center">   
         <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
-            Create
+            Save
         </md-button>
         <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
     </div>

@@ -1,8 +1,8 @@
-<md-dialog aria-label="Assign Tasks Form"  flex flex-gt-sm="50" flex-gt-lg="40" ng-cloak>
-    <form name="assignTaskForm">
+<md-dialog aria-label="{{label}} Form"  flex flex-gt-sm="50" flex-gt-lg="40" ng-cloak>
+    <form name="reworkTaskForm">
         <md-toolbar >
             <div class="md-toolbar-tools">
-                <h2 class="white-text">Assign Tasks</h2>
+                <h2 class="white-text">{{label}}</h2>
                 <span flex></span>
                 <md-button class="md-icon-button" ng-click="cancel()">
                     <md-icon class="mdi mdi-close mdi-24px" aria-label="Close dialog"></md-icon>
@@ -11,22 +11,14 @@
         </md-toolbar>
         <md-dialog-content flex layout-padding layout-wrap>
             <div layout="row" layout-wrap flex>
-                <!-- Designer -->
+                <!-- Comment -->
                 <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
-                    <label>Designer</label>
-                    <md-select name="Designer" required ng-model="designer" ng-change="setDesigner()">
-                        <md-option ng-repeat="user in users | orderBy:'name'" value="{{user.id}}">{{user.name}}</md-option>
-                    </md-select>
-                    <div ng-messages="assignTaskForm.Designer.$error" ng-if="assignTaskForm.Designer.$touched">
-                        <div ng-message="required">Designer is required.</div>
+                    <label>Comment</label>
+                    <textarea name="Comment" ng-model="comment.message" required></textarea>
+                    <div class="hint" ng-if="!reworkTaskForm.Comment.$touched">Tell the designer how can he/she improve this task.</div>
+                    <div ng-messages="reworkTaskForm.Comment.$error" ng-if="reworkTaskForm.Comment.$touched">
+                        <div ng-message="required">Comment is required.</div>
                     </div>
-                </md-input-container>
-            </div>
-            <div layout="row" layout-wrap flex>
-                <!-- Instructions -->
-                <md-input-container class="md-block" flex-xs="100" flex-sm="100" flex-gt-sm>
-                    <label>Instructions</label>
-                    <textarea name="Instructions" ng-model="instructions"></textarea>
                 </md-input-container>
             </div>
             <div flex>
@@ -47,7 +39,7 @@
     </form>
     <div layout="row" layout-align="end center">   
         <md-button ng-if="!busy" class="md-primary" aria-label="Submit" ng-click="submit()">
-            Assign
+            {{action}}
         </md-button>
         <md-progress-circular ng-if="busy" md-mode="indeterminate" class="md-primary" md-diameter="60"></md-progress-circular>
     </div>

@@ -142,7 +142,7 @@ designerModule
 
 				$scope.user = data;
 
-				var pusher = new Pusher('7c041c12ae347877d32d', {
+				var pusher = new Pusher('58891c6a307bb58de62e', {
 			      encrypted: true
 			    });
 

@@ -47,7 +47,7 @@ md-nav-bar {
   color: #03A9F4; }
 
 .accent-text {
-  /* Deep Purple */
+  /* Pink */
   color: #FF4081; }
 
 .white-text {
@@ -144,6 +144,12 @@ md-content.dirty-white {
 
 .orange-bg {
   background: #FF9800; }
+
+.purple-bg {
+  background: #9C27B0; }
+
+.grey-bg {
+  background: #9E9E9E; }
 
 .blur-white {
   background: rgba(255, 255, 255, 0.1); }

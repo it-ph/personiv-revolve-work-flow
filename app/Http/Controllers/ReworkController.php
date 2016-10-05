@@ -7,6 +7,7 @@ use Illuminate\Http\Request;
 use App\Http\Requests;
 
 use Auth;
+use DB;
 use Carbon\Carbon;
 use App\Rework;
 use App\Task;
@@ -43,55 +44,111 @@ class ReworkController extends Controller
      */
     public function rework(Request $request)
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'reworks' => 'required',
-        ]);
-
-        $previous = array_last($request->reworks, function($value){
-            return $value;
-        });
-
-        $previous = Rework::where('id', $previous['id'])->first();
-
-        if($previous->quality_control_id != $request->user()->id)
+        if($request->has('batch'))
         {
-            abort(403, 'Unauthorized action.');
+            for ($i=0; $i < count($request->rework_again); $i++) {
+                DB::transaction(function() use ($request, $i){
+                    $previous = array_last($request->rework_again[$i]['reworks'], function($value){
+                        return $value;
+                    });
+
+                    $previous = Rework::where('id', $previous['id'])->first();
+
+                    if($previous->quality_control_id != $request->user()->id)
+                    {
+                        abort(403, 'Unauthorized action.');
+                    }
+
+                    $task = Task::where('id', $request->rework_again[$i]['id'])->first();
+
+                    $task->status = 'rework';
+
+                    $task->save();
+
+                    $previous->quality_control_time_end = Carbon::now();
+
+                    $previous->quality_control_minutes_spent = Carbon::parse($previous->quality_control_time_start)->diffInMinutes(Carbon::parse($previous->quality_control_time_end));
+
+                    $previous->save();
+
+                    $rework = new Rework;
+
+                    $rework->task_id = $task->id;
+
+                    $rework->designer_id = $previous->designer_id;
+
+                    $rework->save();
+
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - task, sender
+                        $user->notify(new TaskRework($task, Auth::user()));
+                        // broadcast the notifications - task, sender, recipient
+                        event(new PusherTaskRework($task, Auth::user(), $user));
+                    }
+
+                    $designer = User::where('id', $rework->designer_id)->first();
+
+                    $designer->notify(new NotifyDesignerForTaskRework($task, Auth::user()));
+                    event(new PusherNotifyDesignerForTaskRework($task, Auth::user(), $designer));
+                });
+            }
         }
+        else{
+            $this->validate($request, [
+                'id' => 'required|numeric',
+                'reworks' => 'required',
+            ]);
 
-        $task = Task::where('id', $request->id)->first();
+            DB::transaction(function() use ($request){
+                $previous = array_last($request->reworks, function($value){
+                    return $value;
+                });
 
-        $task->status = 'rework';
+                $previous = Rework::where('id', $previous['id'])->first();
 
-        $task->save();
+                if($previous->quality_control_id != $request->user()->id)
+                {
+                    abort(403, 'Unauthorized action.');
+                }
 
-        $previous->quality_control_time_end = Carbon::now();
+                $task = Task::where('id', $request->id)->first();
 
-        $previous->quality_control_minutes_spent = Carbon::parse($previous->quality_control_time_start)->diffInMinutes(Carbon::parse($previous->quality_control_time_end));
+                $task->status = 'rework';
 
-        $previous->save();
+                $task->save();
 
-        $rework = new Rework;
+                $previous->quality_control_time_end = Carbon::now();
 
-        $rework->task_id = $task->id;
+                $previous->quality_control_minutes_spent = Carbon::parse($previous->quality_control_time_start)->diffInMinutes(Carbon::parse($previous->quality_control_time_end));
 
-        $rework->designer_id = $previous->designer_id;
+                $previous->save();
 
-        $rework->save();
+                $rework = new Rework;
 
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+                $rework->task_id = $task->id;
 
-        foreach ($users as $key => $user) {
-            // save the notifications to database - task, sender
-            $user->notify(new TaskRework($task, Auth::user()));
-            // broadcast the notifications - task, sender, recipient
-            event(new PusherTaskRework($task, Auth::user(), $user));
+                $rework->designer_id = $previous->designer_id;
+
+                $rework->save();
+
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - task, sender
+                    $user->notify(new TaskRework($task, Auth::user()));
+                    // broadcast the notifications - task, sender, recipient
+                    event(new PusherTaskRework($task, Auth::user(), $user));
+                }
+
+                $designer = User::where('id', $rework->designer_id)->first();
+
+                $designer->notify(new NotifyDesignerForTaskRework($task, Auth::user()));
+                event(new PusherNotifyDesignerForTaskRework($task, Auth::user(), $designer));
+            });
+
         }
-
-        $designer = User::where('id', $rework->designer_id)->first();
-
-        $designer->notify(new NotifyDesignerForTaskRework($task, Auth::user()));
-        event(new PusherNotifyDesignerForTaskRework($task, Auth::user(), $designer));
     }
 
     /**
@@ -139,48 +196,95 @@ class ReworkController extends Controller
      */
     public function complete(Request $request)
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'reworks' => 'required',
-        ]);
-
-        $rework = array_last($request->reworks, function($value){
-            return $value;
-        });
-
-        $rework = Rework::where('id', $rework['id'])->first();
-
-        if($rework->quality_control_id != $request->user()->id)
+        if($request->has('batch'))
         {
-            abort(403, 'Unauthorized action.');
+            for ($i=0; $i < count($request->reworks); $i++) {
+                DB::transaction(function() use ($request, $i){
+                    $rework = array_last($request->reworks[$i]['reworks'], function($value){
+                        return $value;
+                    });
+
+                    $rework = Rework::where('id', $rework['id'])->first();
+
+                    if($rework->quality_control_id != $request->user()->id)
+                    {
+                        abort(403, 'Unauthorized action.');
+                    }
+
+                    $task = Task::where('id', $request->reworks[$i]['id'])->first();
+
+                    $task->status = 'complete';
+
+                    $task->save();
+
+                    $rework->quality_control_time_end = Carbon::now();
+
+                    $rework->quality_control_minutes_spent = Carbon::parse($rework->quality_control_time_start)->diffInMinutes(Carbon::parse($rework->quality_control_time_end));
+
+                    $rework->save();
+
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - task, sender
+                        $user->notify(new MarkAsComplete($task, Auth::user()));
+                        // broadcast the notifications - task, sender, recipient
+                        event(new PusherMarkAsComplete($task, Auth::user(), $user));
+                    }
+
+                    $designer = User::where('id', $rework->designer_id)->first();
+
+                    $designer->notify(new NotifyDesignerForCompleteTask($task, Auth::user()));
+                    event(new PusherNotifyDesignerForCompleteTask($task, Auth::user(), $designer));
+                });
+            }
+        }
+        else{
+            $this->validate($request, [
+                'id' => 'required|numeric',
+                'reworks' => 'required',
+            ]);
+
+            DB::transaction(function() use ($request){        
+                $rework = array_last($request->reworks, function($value){
+                    return $value;
+                });
+
+                $rework = Rework::where('id', $rework['id'])->first();
+
+                if($rework->quality_control_id != $request->user()->id)
+                {
+                    abort(403, 'Unauthorized action.');
+                }
+
+                $task = Task::where('id', $request->id)->first();
+
+                $task->status = 'complete';
+
+                $task->save();
+
+                $rework->quality_control_time_end = Carbon::now();
+
+                $rework->quality_control_minutes_spent = Carbon::parse($rework->quality_control_time_start)->diffInMinutes(Carbon::parse($rework->quality_control_time_end));
+
+                $rework->save();
+
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - task, sender
+                    $user->notify(new MarkAsComplete($task, Auth::user()));
+                    // broadcast the notifications - task, sender, recipient
+                    event(new PusherMarkAsComplete($task, Auth::user(), $user));
+                }
+
+                $designer = User::where('id', $rework->designer_id)->first();
+
+                $designer->notify(new NotifyDesignerForCompleteTask($task, Auth::user()));
+                event(new PusherNotifyDesignerForCompleteTask($task, Auth::user(), $designer));
+            });
         }
 
-        $task = Task::where('id', $request->id)->first();
-
-        $task->status = 'complete';
-
-        $task->save();
-
-
-        $rework->quality_control_time_end = Carbon::now();
-
-        $rework->quality_control_minutes_spent = Carbon::parse($rework->quality_control_time_start)->diffInMinutes(Carbon::parse($rework->quality_control_time_end));
-
-        $rework->save();
-
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
-
-        foreach ($users as $key => $user) {
-            // save the notifications to database - task, sender
-            $user->notify(new MarkAsComplete($task, Auth::user()));
-            // broadcast the notifications - task, sender, recipient
-            event(new PusherMarkAsComplete($task, Auth::user(), $user));
-        }
-
-        $designer = User::where('id', $rework->designer_id)->first();
-
-        $designer->notify(new NotifyDesignerForCompleteTask($task, Auth::user()));
-        event(new PusherNotifyDesignerForCompleteTask($task, Auth::user(), $designer));
     }
 
     /**
@@ -190,38 +294,78 @@ class ReworkController extends Controller
      */
     public function startQC(Request $request)
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'reworks' => 'required',
-        ]);
+        if($request->has('batch'))
+        {
+            for ($i=0; $i < count($request->tasks); $i++) {
+                DB::transaction(function() use ($request, $i){
+                    $rework = array_last($request->tasks[$i]['reworks'], function($value){
+                        return $value;
+                    });
 
-        $rework = array_last($request->reworks, function($value){
-            return $value;
-        });
+                    $rework = Rework::where('id', $rework['id'])->first();
 
-        $rework = Rework::where('id', $rework['id'])->first();
+                    $task = Task::where('id', $request->tasks[$i]['id'])->first();
 
-        $task = Task::where('id', $request->id)->first();
+                    $task->status = 'in_progress';
 
-        $task->status = 'in_progress';
+                    $task->save();
 
-        $task->save();
+                    $rework->quality_control_id = $request->user()->id;
+                
+                    $rework->quality_control_time_start = Carbon::now();
+                    
+                    $rework->save();
 
-        $rework->quality_control_id = $request->user()->id;
-        
-        $rework->quality_control_time_start = Carbon::now();
-        
-        $rework->save();
+                    $rework->task = $task;
 
-        $rework->task = $task;
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - quality control assigned, sender
+                        $user->notify(new QualityControlTaskStart($rework, Auth::user()));
+                        // broadcast the notifications - quality control assigned, sender, recipient
+                        event(new PusherQualityControlTaskStart($rework->task, Auth::user(), $user));
+                    }
+                });
+            }
+        }
+        else{
+            $this->validate($request, [
+                'id' => 'required|numeric',
+                'reworks' => 'required',
+            ]);
 
-        foreach ($users as $key => $user) {
-            // save the notifications to database - quality control assigned, sender
-            $user->notify(new QualityControlTaskStart($rework, Auth::user()));
-            // broadcast the notifications - quality control assigned, sender, recipient
-            event(new PusherQualityControlTaskStart($rework->task, Auth::user(), $user));
+            DB::transaction(function() use ($request){
+                $rework = array_last($request->reworks, function($value){
+                    return $value;
+                });
+
+                $rework = Rework::where('id', $rework['id'])->first();
+
+                $task = Task::where('id', $request->id)->first();
+
+                $task->status = 'in_progress';
+
+                $task->save();
+
+                $rework->quality_control_id = $request->user()->id;
+                
+                $rework->quality_control_time_start = Carbon::now();
+                
+                $rework->save();
+
+                $rework->task = $task;
+
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - quality control assigned, sender
+                    $user->notify(new QualityControlTaskStart($rework, Auth::user()));
+                    // broadcast the notifications - quality control assigned, sender, recipient
+                    event(new PusherQualityControlTaskStart($rework->task, Auth::user(), $user));
+                }
+            });
+
         }
     }
 
@@ -232,38 +376,77 @@ class ReworkController extends Controller
      */
     public function forQC(Request $request)
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'reworks' => 'required',
-        ]);
+        if($request->has('batch'))
+        {
+            for ($i=0; $i < count($request->tasks); $i++) {
+                DB::transaction(function() use ($request, $i){
+                    $rework = array_last($request->tasks[$i]['reworks'], function($value){
+                        return $value;
+                    });
 
-        $rework = array_last($request->reworks, function($value){
-            return $value;
-        });
+                    $task = Task::where('id', $request->tasks[$i]['id'])->first();
 
-        $task = Task::where('id', $request->id)->first();
+                    $task->status = 'for_qc';
 
-        $task->status = 'for_qc';
+                    $task->save();
 
-        $task->save();
+                    $rework = Rework::where('id', $rework['id'])->first();
 
-        $rework = Rework::where('id', $rework['id'])->first();
+                    $rework->designer_time_end = Carbon::now();
 
-        $rework->designer_time_end = Carbon::now();
+                    $rework->designer_minutes_spent = Carbon::parse($rework->designer_time_start)->diffInMinutes(Carbon::parse($rework->designer_time_end));
+                    
+                    $rework->save();
 
-        $rework->designer_minutes_spent = Carbon::parse($rework->designer_time_start)->diffInMinutes(Carbon::parse($rework->designer_time_end));
-        
-        $rework->save();
+                    $rework->task = $task;
 
-        $rework->task = $task;
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - task, sender
+                        $user->notify(new ForQC($task, Auth::user()));
+                        // broadcast the notifications - task, sender, recipient
+                        event(new PusherForQC($task, Auth::user(), $user));
+                    }
+                });
+            }
+        }
+        else{
+            $this->validate($request, [
+                'id' => 'required|numeric',
+                'reworks' => 'required',
+            ]);
 
-        foreach ($users as $key => $user) {
-            // save the notifications to database - task, sender
-            $user->notify(new ForQC($task, Auth::user()));
-            // broadcast the notifications - task, sender, recipient
-            event(new PusherForQC($task, Auth::user(), $user));
+            DB::transaction(function() use ($request){            
+                $rework = array_last($request->reworks, function($value){
+                    return $value;
+                });
+
+                $task = Task::where('id', $request->id)->first();
+
+                $task->status = 'for_qc';
+
+                $task->save();
+
+                $rework = Rework::where('id', $rework['id'])->first();
+
+                $rework->designer_time_end = Carbon::now();
+
+                $rework->designer_minutes_spent = Carbon::parse($rework->designer_time_start)->diffInMinutes(Carbon::parse($rework->designer_time_end));
+                
+                $rework->save();
+
+                $rework->task = $task;
+
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - task, sender
+                    $user->notify(new ForQC($task, Auth::user()));
+                    // broadcast the notifications - task, sender, recipient
+                    event(new PusherForQC($task, Auth::user(), $user));
+                }
+            });
         }
     }
 
@@ -274,42 +457,84 @@ class ReworkController extends Controller
      */
     public function revise(Request $request)
     {
-        $this->validate($request, [
-            'id' => 'required|numeric',
-            'reworks' => 'required',
-        ]);
-
-        $rework = array_last($request->reworks, function($value){
-            return $value;
-        });
-
-        $rework = Rework::where('id', $rework['id'])->first();
-
-        if($rework->designer_id != $request->user()->id)
+        if($request->has('batch'))
         {
-            abort(403, 'Unauthorized action.');
+            for ($i=0; $i < count($request->tasks); $i++) {
+                DB::transaction(function() use ($request, $i){
+                    $rework = array_last($request->tasks[$i]['reworks'], function($value){
+                        return $value;
+                    });
+
+                    $rework = Rework::where('id', $rework['id'])->first();
+
+                    if($rework->designer_id != $request->user()->id)
+                    {
+                        abort(403, 'Unauthorized action.');
+                    }
+
+                    $task = Task::where('id', $request->tasks[$i]['id'])->first();
+
+                    $task->status = 'in_progress';
+
+                    $task->save();
+
+                    $rework->designer_time_start = Carbon::now();
+
+                    $rework->save();
+
+                    $rework->task = $task;
+
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - designer assigned, sender
+                        $user->notify(new DesignerRevisionStart($rework, Auth::user()));
+                        // broadcast the notifications - designer assigned, sender, recipient
+                        event(new PusherDesignerRevisionStart($rework->task, Auth::user(), $user));
+                    }
+                });
+            }
         }
+        else{
+            $this->validate($request, [
+                'id' => 'required|numeric',
+                'reworks' => 'required',
+            ]);
 
-        $task = Task::where('id', $request->id)->first();
+            DB::transaction(function() use ($request){
+                $rework = array_last($request->reworks, function($value){
+                    return $value;
+                });
 
-        $task->status = 'in_progress';
+                $rework = Rework::where('id', $rework['id'])->first();
 
-        $task->save();
+                if($rework->designer_id != $request->user()->id)
+                {
+                    abort(403, 'Unauthorized action.');
+                }
+
+                $task = Task::where('id', $request->id)->first();
+
+                $task->status = 'in_progress';
+
+                $task->save();
 
 
-        $rework->designer_time_start = Carbon::now();
+                $rework->designer_time_start = Carbon::now();
 
-        $rework->save();
+                $rework->save();
 
-        $rework->task = $task;
+                $rework->task = $task;
 
-        $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
-        foreach ($users as $key => $user) {
-            // save the notifications to database - designer assigned, sender
-            $user->notify(new DesignerRevisionStart($rework, Auth::user()));
-            // broadcast the notifications - designer assigned, sender, recipient
-            event(new PusherDesignerRevisionStart($rework->task, Auth::user(), $user));
+                foreach ($users as $key => $user) {
+                    // save the notifications to database - designer assigned, sender
+                    $user->notify(new DesignerRevisionStart($rework, Auth::user()));
+                    // broadcast the notifications - designer assigned, sender, recipient
+                    event(new PusherDesignerRevisionStart($rework->task, Auth::user(), $user));
+                }
+            });
         }
     }
 
