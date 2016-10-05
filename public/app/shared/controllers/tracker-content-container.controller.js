@@ -60,13 +60,14 @@ sharedModule
 		      	fullscreen: true,
 		    })
 		     .then(function(data) {
-		     	pushItem(data);
+		     	// pushItem(data);
 		    	$scope.task.busy = true;
 			    /* Refreshes the list*/
       			var message = 'A new task has been created.';
 			    Preloader.notify(message)
 			    	.then(function(){
 				     	$scope.task.busy = false;
+				     	$scope.subheader.refresh();
 			    	})
 		    }, function() {
 		    	return;
@@ -176,6 +177,24 @@ sharedModule
 							'relation': 'designer_assigned',
 							'withTrashed': false,
 						},
+						{
+							'relation': 'quality_control_assigned',
+							'withTrashed': false,
+						},
+						{
+							'relation': 'reworks',
+							'withTrashed': false,
+							'with': [
+								{
+									'relation' : 'designer',
+									'withTrashed': true,
+								},
+								{
+									'relation' : 'quality_control',
+									'withTrashed': true,
+								},
+							]
+						},
 					],
 					'where': [
 						{
@@ -189,6 +208,60 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Complete',
+						'icon': 'mdi-check',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Complete';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchCompleteDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+					{
+						'label': 'Batch Rework',
+						'icon': 'mdi-repeat',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Batch Rework';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchReworkDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-rework-tasks-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'For QC',
@@ -203,8 +276,26 @@ sharedModule
 							'withTrashed': true,
 						},
 						{
+							'relation': 'designer_assigned',
+							'withTrashed': false,
+						},
+						{
 							'relation': 'quality_control_assigned',
 							'withTrashed': false,
+						},
+						{
+							'relation': 'reworks',
+							'withTrashed': false,
+							'with': [
+								{
+									'relation' : 'designer',
+									'withTrashed': true,
+								},
+								{
+									'relation' : 'quality_control',
+									'withTrashed': true,
+								},
+							]
 						},
 					],
 					'where': [
@@ -219,6 +310,60 @@ sharedModule
 				action: function(current){
 					setInit(current);
 				},
+				'menu': [
+					{
+						'label': 'Batch Start QC',
+						'icon': 'mdi-timer',
+						action: function(){
+							$scope.selectForQC = true;
+							$scope.fab.label = 'Start QC';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchStartQCDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectForQC = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+					{
+						'label': 'Batch QC Start Revised',
+						'icon': 'mdi-timelapse',
+						action: function(){
+							$scope.selectRework = true;
+							$scope.fab.label = 'QC Start Revised';
+							$scope.fab.icon = this.icon;
+							$scope.fab.action = function(){
+								Preloader.set($scope.task.items);
+								$mdDialog.show({
+							      	controller: 'batchQCStartRevisedDialogController',
+							      	templateUrl: '/app/shared/templates/dialogs/batch-action-task-dialog.template.html',
+							      	parent: angular.element(document.body),
+							      	fullscreen: true,
+							    })
+							    .then(function(){
+							    	$scope.selectRework = false;
+							    	$scope.fab.label = 'Task';
+									$scope.fab.icon = 'mdi-plus';
+									$scope.fab.action = createTask;
+
+									$scope.subheader.refresh();
+							    })
+							}
+						},
+					},
+				],
 			},
 			{
 				'label':'Rework',
@@ -320,6 +465,8 @@ sharedModule
 
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
+			$scope.selectRework = false;
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
 			$scope.fab.action = createTask;
@@ -389,6 +536,9 @@ sharedModule
 		}
 
 		$scope.init = function(request, searched){
+			$scope.selectMultiple = false;
+			$scope.selectForQC = false;
+			$scope.selectRework = false;
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;
@@ -420,7 +570,7 @@ sharedModule
 			// 2 is default so the next page to be loaded will be page 2 
 			$scope.task.page = 2;
 
-			Task.paginate(request)
+			Task.enlist(request)
 				.success(function(data){
 					if(!data)
 					{
@@ -460,7 +610,7 @@ sharedModule
 						$scope.task.busy = true;
 						$scope.isLoading = true;
 						// Calls the next page of pagination.
-						Task.paginate(request, $scope.task.page)
+						Task.enlist(request, $scope.task.page)
 							.success(function(data){
 								// increment the page to set up next page for next AJAX Call
 								$scope.task.page++;

@@ -13,6 +13,24 @@ sharedModule
 			$scope.init();
 		});
 
+		$scope.fab = {};
+		$scope.fab.label = 'Edit';
+		$scope.fab.icon = 'mdi-pencil';
+		$scope.fab.action = function(){
+			Preloader.set(taskID);
+			$mdDialog.show({
+		      	controller: 'editTaskDialogController',
+		      	templateUrl: '/app/components/admin/templates/dialogs/create-task-dialog.template.html',
+		      	parent: angular.element(document.body),
+		      	fullscreen: true,
+		    })
+		    .then(function(){
+		    	$scope.init();
+		    }, function(){
+		    	return;
+		    })
+		}
+
 		/* Designer actions */
 		// check the user if he has pending works before executing this
 		$scope.start = function()
@@ -440,17 +458,22 @@ sharedModule
 				],
 			};
 
-			User.pending()
+			// User.pending()
+			// 	.success(function(data){
+			// 		if(!data)
+			// 		{
+			// 			$scope.hasPending = false;	
+			// 		}
+			// 		else{
+			// 			$scope.current = data;
+			// 			$scope.hasPending = data == taskID ? false: true;
+			// 		}
+			// 	})
+
+			User.check()
 				.success(function(data){
-					if(!data)
-					{
-						$scope.hasPending = false;	
-					}
-					else{
-						$scope.current = data;
-						$scope.hasPending = data == taskID ? false: true;
-					}
-				})
+					$scope.fab.show = data.role != 'designer' ? true : false;
+				});
 
 			Task.enlist(query)
 				.success(function(data){

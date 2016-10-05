@@ -6,6 +6,7 @@ use Illuminate\Http\Request;
 
 use App\Http\Requests;
 use Auth;
+use DB;
 use App\Comment;
 use App\Task;
 use App\User;
@@ -44,77 +45,150 @@ class CommentController extends Controller
      */
     public function store(Request $request)
     {
-        $this->validate($request, [
-            'task_id' => 'required|numeric',
-            'message' => 'required',
-        ]);
-
-        $task = Task::with(['designer_assigned' => function($query){ $query->with('designer'); }])->with(['quality_control_assigned' => function($query){ $query->with('quality_control'); }])->where('id', $request->task_id)->first();
-
-        if($request->rework)
+        if($request->has('batch'))
         {
-            $task->load('reworks');
-            
-            $rework = array_last($task->reworks->toArray(), function($value){
-                return $value;
-            });
-            
-            $rework = Rework::where('id', $rework['id'])->first();
-        }
+            for ($i=0; $i < count($request->tasks); $i++) { 
+                DB::transaction(function() use ($request, $i){
+                    $task = Task::with(['designer_assigned' => function($query){ $query->with('designer'); }])->with(['quality_control_assigned' => function($query){ $query->with('quality_control'); }])->where('id', $request->tasks[$i]['id'])->first();
 
-        $comment = new Comment;
+                    if($request->has('rework'))
+                    {
+                        $task->load('reworks');
+                        
+                        $rework = array_last($task->reworks->toArray(), function($value){
+                            return $value;
+                        });
+                        
+                        $rework = Rework::where('id', $rework['id'])->first();
+                    }
 
-        $comment->task_id = $request->task_id;
-        $comment->user_id = $request->user()->id;
-        $comment->message = $request->message;
-        $comment->save();
+                    $comment = new Comment;
 
-        if(!isset($rework))
-        { 
-            if(isset($task->designer_assigned->designer))
-            {
-                // if the person is the designer do not notify
-                if($task->designer_assigned->designer->id != $request->user()->id)
-                {
-                    $task->designer_assigned->designer->notify(new NotifyComment($task, Auth::user()));
-                    event(new PusherNotifyComment($task, Auth::user(), $task->designer_assigned->designer));
-                }
-            }
-            
-            if(isset($task->quality_control_assigned->quality_control))
-            {
-                // if the person is the quality control do not notify
-                if($task->quality_control_assigned->quality_control->id != $request->user()->id)
-                {
-                    $task->quality_control_assigned->quality_control->notify(new NotifyComment($task, Auth::user()));
-                    event(new PusherNotifyComment($task, Auth::user(), $task->quality_control_assigned->quality_control));
-                }
+                    $comment->task_id = $request->tasks[$i]['id'];
+                    $comment->user_id = $request->user()->id;
+                    $comment->message = $request->tasks[$i]['message'];
+                    $comment->save();
+
+                    if(!isset($rework))
+                    { 
+                        if(isset($task->designer_assigned->designer))
+                        {
+                            // if the person is the designer do not notify
+                            if($task->designer_assigned->designer->id != $request->user()->id)
+                            {
+                                $task->designer_assigned->designer->notify(new NotifyComment($task, Auth::user()));
+                                event(new PusherNotifyComment($task, Auth::user(), $task->designer_assigned->designer));
+                            }
+                        }
+                        
+                        if(isset($task->quality_control_assigned->quality_control))
+                        {
+                            // if the person is the quality control do not notify
+                            if($task->quality_control_assigned->quality_control->id != $request->user()->id)
+                            {
+                                $task->quality_control_assigned->quality_control->notify(new NotifyComment($task, Auth::user()));
+                                event(new PusherNotifyComment($task, Auth::user(), $task->quality_control_assigned->quality_control));
+                            }
+                        }
+                    }
+                    else{
+                        // if the person is the designer do not notify
+                        if(isset($rework->designer_id))
+                        {
+                            if($rework->designer_id != $request->user()->id)
+                            {
+                                $rework->designer = User::where('id', $rework->designer_id)->first();
+                                $rework->designer->notify(new NotifyComment($task, Auth::user()));
+                                event(new PusherNotifyComment($task, Auth::user(), $rework->designer));
+                            }
+                        }
+
+                        if(isset($rework->quality_control_id))
+                        {
+                            if($rework->quality_control_id != $request->user()->id)
+                            {
+                                $rework->quality_control = User::where('id', $rework->quality_control_id)->first();
+                                $rework->quality_control->notify(new NotifyComment($task, Auth::user()));
+                                event(new PusherNotifyComment($task, Auth::user(), $rework->quality_control));
+                            }
+                        }
+                    }
+                });
             }
         }
         else{
-            // if the person is the designer do not notify
-            if(isset($rework->designer_id))
-            {
-                if($rework->designer_id != $request->user()->id)
-                {
-                    $rework->designer = User::where('id', $rework->designer_id)->first();
-                    $rework->designer->notify(new NotifyComment($task, Auth::user()));
-                    event(new PusherNotifyComment($task, Auth::user(), $rework->designer));
-                }
-            }
+            $this->validate($request, [
+                'task_id' => 'required|numeric',
+                'message' => 'required',
+            ]);
 
-            if(isset($rework->quality_control_id))
-            {
-                if($rework->quality_control_id != $request->user()->id)
+            DB::transaction(function() use ($request){
+                $task = Task::with(['designer_assigned' => function($query){ $query->with('designer'); }])->with(['quality_control_assigned' => function($query){ $query->with('quality_control'); }])->where('id', $request->task_id)->first();
+
+                if($request->rework)
                 {
-                    $rework->quality_control = User::where('id', $rework->quality_control_id)->first();
-                    $rework->quality_control->notify(new NotifyComment($task, Auth::user()));
-                    event(new PusherNotifyComment($task, Auth::user(), $rework->quality_control));
+                    $task->load('reworks');
+                    
+                    $rework = array_last($task->reworks->toArray(), function($value){
+                        return $value;
+                    });
+                    
+                    $rework = Rework::where('id', $rework['id'])->first();
                 }
-            }
+
+                $comment = new Comment;
+
+                $comment->task_id = $request->task_id;
+                $comment->user_id = $request->user()->id;
+                $comment->message = $request->message;
+                $comment->save();
+
+                if(!isset($rework))
+                { 
+                    if(isset($task->designer_assigned->designer))
+                    {
+                        // if the person is the designer do not notify
+                        if($task->designer_assigned->designer->id != $request->user()->id)
+                        {
+                            $task->designer_assigned->designer->notify(new NotifyComment($task, Auth::user()));
+                            event(new PusherNotifyComment($task, Auth::user(), $task->designer_assigned->designer));
+                        }
+                    }
+                    
+                    if(isset($task->quality_control_assigned->quality_control))
+                    {
+                        // if the person is the quality control do not notify
+                        if($task->quality_control_assigned->quality_control->id != $request->user()->id)
+                        {
+                            $task->quality_control_assigned->quality_control->notify(new NotifyComment($task, Auth::user()));
+                            event(new PusherNotifyComment($task, Auth::user(), $task->quality_control_assigned->quality_control));
+                        }
+                    }
+                }
+                else{
+                    // if the person is the designer do not notify
+                    if(isset($rework->designer_id))
+                    {
+                        if($rework->designer_id != $request->user()->id)
+                        {
+                            $rework->designer = User::where('id', $rework->designer_id)->first();
+                            $rework->designer->notify(new NotifyComment($task, Auth::user()));
+                            event(new PusherNotifyComment($task, Auth::user(), $rework->designer));
+                        }
+                    }
+
+                    if(isset($rework->quality_control_id))
+                    {
+                        if($rework->quality_control_id != $request->user()->id)
+                        {
+                            $rework->quality_control = User::where('id', $rework->quality_control_id)->first();
+                            $rework->quality_control->notify(new NotifyComment($task, Auth::user()));
+                            event(new PusherNotifyComment($task, Auth::user(), $rework->quality_control));
+                        }
+                    }
+                }
+            });
         }
-
-
     }
 
     /**

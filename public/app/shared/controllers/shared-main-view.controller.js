@@ -86,6 +86,20 @@ sharedModule
 							})
 					}
 				}
+
+				else if(notif.type == 'App\\Notifications\\TaskUpdated'){
+					notif.message = 'updated a task.';
+					notif.action = function(id){
+						// mark as read
+						Notification.markAsRead(id)
+							.success(function(data){
+								formatNotification(data);
+								$scope.user = data;
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
+							})
+					}
+				}
+
 				else if(notif.type == 'App\\Notifications\\SpreadsheetCreated'){
 					notif.message = 'created a new sheet.';
 					notif.action = function(id){
@@ -268,6 +282,13 @@ sharedModule
 				    channel.user.bind('App\\Events\\PusherTaskCreated', function(data) {
 				    	fetchUnreadNotifications();
 				    	var message = data.sender.name + ' created a new task.';
+				    	Preloader.newNotification(message);
+						$scope.$broadcast('refresh');
+				    }),
+
+				    channel.user.bind('App\\Events\\PusherTaskUpdated', function(data) {
+				    	fetchUnreadNotifications();
+				    	var message = data.sender.name + ' updated a task.';
 				    	Preloader.newNotification(message);
 						$scope.$broadcast('refresh');
 				    }),

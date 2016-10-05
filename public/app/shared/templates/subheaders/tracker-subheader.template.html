@@ -6,14 +6,14 @@
 <!-- Icons -->
 <md-subheader layout="row" flex>
     <!-- Cancel Select Multiple -->
-    <md-button ng-if="selectMultiple" class="md-icon-button" ng-click="subheader.cancelSelectMultiple()">
+    <md-button ng-if="selectMultiple || selectForQC || selectRework" class="md-icon-button" ng-click="subheader.cancelSelectMultiple()">
         <md-icon class="mdi grey mdi-close"></md-icon>
         <md-tooltip hide-xs hide-sm hide-md>Cancel</md-tooltip>
     </md-button>
     
     <span flex></span>
     <!-- Refresh -->
-	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple">
+	<md-button class="md-icon-button" ng-click="subheader.refresh()" ng-if="!selectMultiple && !selectForQC && !selectRework">
 		<md-icon class="mdi grey mdi-refresh"></md-icon>
 		<md-tooltip hide-xs hide-sm hide-md>Refresh</md-tooltip>
 	</md-button>
@@ -78,7 +78,7 @@
         </md-menu-content>
     </md-menu>
     <!-- Other Buttons -->
-    <md-button ng-repeat="menu in subheader.current.menu" aria-label="others" class="md-icon-button" ng-click="menu.action()" ng-if="!selectMultiple">
+    <md-button ng-repeat="menu in subheader.current.menu" aria-label="others" class="md-icon-button" ng-click="menu.action()" ng-if="!selectMultiple && !selectForQC && !selectRework">
         <md-icon class="mdi {{menu.icon}} grey"></md-icon>
         <md-tooltip hide-xs hide-sm hide-md>{{menu.label}}</md-tooltip>
     </md-button>
