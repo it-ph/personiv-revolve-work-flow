@@ -81,12 +81,12 @@ sharedModule
 
 			else if(notif.type == 'App\\Notifications\\MarkAsComplete'){
 				notif.message = 'marked ' + notif.data.attachment.file_name + ' as complete.';
-				notif.task_id = notif.data.attachment.task_id;
+				notif.task_id = notif.data.attachment.id;
 			}
 
 			else if(notif.type == 'App\\Notifications\\TaskRework'){
 				notif.message = 'marked ' + notif.data.attachment.file_name + ' as rework.';
-				notif.task_id = notif.data.attachment.task_id;
+				notif.task_id = notif.data.attachment.id;
 			}
 
 			else if(notif.type == 'App\\Notifications\\NotifyComment'){

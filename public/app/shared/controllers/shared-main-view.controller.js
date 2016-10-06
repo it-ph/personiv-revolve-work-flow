@@ -199,7 +199,7 @@ sharedModule
 							.success(function(data){
 								formatNotification(data);
 								$scope.user = data;
-								$state.go('main.task', {'taskID': notif.data.attachment.task_id});
+								$state.go('main.task', {'taskID': notif.data.attachment.id});
 							})
 					}
 				}
