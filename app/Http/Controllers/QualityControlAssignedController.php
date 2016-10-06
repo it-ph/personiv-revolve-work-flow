@@ -278,7 +278,7 @@ class QualityControlAssignedController extends Controller
 
                     $quality_control_assigned->task = $task;
 
-                    $users = User::whereIn('role', ['admin'])->whereNotIn('id', [$request->user()->id])->get();
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
 
                     foreach ($users as $key => $user) {
                         // save the notifications to database - quality control assigned, sender
