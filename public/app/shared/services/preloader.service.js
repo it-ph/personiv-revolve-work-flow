@@ -45,8 +45,8 @@ sharedModule
 			      	.highlightClass('md-primary')// Accent is used by default, this just demonstrates the usage.
 			      	.position('bottom right');
 
-			    var audio = new Audio('/audio/notif.mp3')
-			    audio.play();
+			    // var audio = new Audio('/audio/notif.mp3')
+			    // audio.play();
 			    
 			    return $mdToast.show(toast);
 			},

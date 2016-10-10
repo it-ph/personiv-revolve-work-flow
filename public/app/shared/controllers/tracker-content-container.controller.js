@@ -463,6 +463,17 @@ sharedModule
 			},
 		];
 
+		$scope.subheader.mark = {};
+
+		$scope.subheader.toggleMark = function(){
+			$scope.subheader.mark.all = !$scope.subheader.mark.all;
+			$scope.subheader.mark.icon = $scope.subheader.mark.all ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline';
+			$scope.subheader.mark.label = $scope.subheader.mark.all ? 'Uncheck all' : 'Check all';
+			angular.forEach($scope.task.items, function(item){
+				item.include = $scope.subheader.mark.all;
+			});
+		}
+
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
 			$scope.selectForQC = false;
@@ -470,6 +481,9 @@ sharedModule
 			$scope.fab.label = 'Task';
 			$scope.fab.icon = 'mdi-plus';
 			$scope.fab.action = createTask;
+			$scope.subheader.mark.all = false;
+			$scope.subheader.mark.icon = 'mdi-checkbox-blank-outline';
+			$scope.subheader.mark.label = 'Check all';
 
 			angular.forEach($scope.task.items, function(item){
 				item.include = false;
@@ -539,6 +553,12 @@ sharedModule
 			$scope.selectMultiple = false;
 			$scope.selectForQC = false;
 			$scope.selectRework = false;
+
+			$scope.subheader.mark.all = false;
+			$scope.subheader.mark.icon = 'mdi-checkbox-blank-outline';
+			$scope.subheader.mark.label = 'Check all';
+
+
 			Category.index()
 				.success(function(data){
 					$scope.categories = data;
