@@ -390,11 +390,28 @@ designerModule
 			},
 		];
 
+		$scope.subheader.mark = {};
+		$scope.subheader.mark.all = false;
+		$scope.subheader.mark.icon = 'mdi-checkbox-blank-outline';
+		$scope.subheader.mark.label = 'Check all';
+
+		$scope.subheader.toggleMark = function(){
+			$scope.subheader.mark.all = !$scope.subheader.mark.all;
+			$scope.subheader.mark.icon = $scope.subheader.mark.all ? 'mdi-checkbox-marked' : 'mdi-checkbox-blank-outline';
+			$scope.subheader.mark.label = $scope.subheader.mark.all ? 'Uncheck all' : 'Check all';
+			angular.forEach($scope.task.items, function(item){
+				item.include = $scope.subheader.mark.all;
+			});
+		}
+
 		$scope.subheader.cancelSelectMultiple = function(){
 			$scope.selectMultiple = false;
 			$scope.selectForQC = false;
 			$scope.selectRework = false;
 			$scope.fab.show = false;
+			$scope.subheader.mark.all = false;
+			$scope.subheader.mark.icon = 'mdi-checkbox-blank-outline';
+			$scope.subheader.mark.label = 'Check all';
 
 			angular.forEach($scope.task.items, function(item){
 				item.include = false;
@@ -542,7 +559,10 @@ designerModule
 
 								// iterate over each data then splice it to the data array
 								angular.forEach(data.data, function(item, key){
-									pushItem(item.task);
+									if(item.task)
+									{
+										pushItem(item.task);
+									}
 								});
 
 								// Enables again the pagination call for next call.

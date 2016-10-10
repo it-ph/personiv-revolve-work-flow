@@ -82,4 +82,10 @@
         <md-icon class="mdi {{menu.icon}} grey"></md-icon>
         <md-tooltip hide-xs hide-sm hide-md>{{menu.label}}</md-tooltip>
     </md-button>
+
+    <!-- Mark Multiple -->
+    <md-button ng-if="selectMultiple || selectForQC || selectRework" class="md-icon-button" ng-click="subheader.toggleMark()">
+        <md-icon class="mdi grey {{subheader.mark.icon}}"></md-icon>
+        <md-tooltip hide-xs hide-sm hide-md>{{subheader.mark.label}}</md-tooltip>
+    </md-button>
 </md-subheader>
