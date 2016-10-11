@@ -14,6 +14,7 @@ class CreateSpreadsheetsTable extends Migration
     public function up()
     {
         Schema::create('spreadsheets', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->string('file_name');
             $table->string('path');

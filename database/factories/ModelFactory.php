@@ -31,6 +31,15 @@ $factory->defineAs(App\User::class, 'mcoy', function ($faker) use ($factory) {
     ];
 });
 
+$factory->defineAs(App\User::class, 'don', function ($faker) use ($factory) {
+    return [
+        'name' => 'Don Abe',
+        'email' => 'don.abe@personiv.com',
+        'password' => bcrypt('!welcome10'),
+        'role' => 'admin',
+    ];
+});
+
 // Pending Task
 $factory->defineAs(App\User::class, 'designer', function ($faker) use ($factory) {
     $task = $factory->raw(App\User::class);

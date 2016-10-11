@@ -14,6 +14,7 @@ class CreateDesignerAssignedTable extends Migration
     public function up()
     {
         Schema::create('designer_assigned', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->integer('task_id')->unsigned();
             $table->integer('designer_id')->unsigned();
