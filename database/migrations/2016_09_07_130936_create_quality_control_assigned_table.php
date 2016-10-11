@@ -14,6 +14,7 @@ class CreateQualityControlAssignedTable extends Migration
     public function up()
     {
         Schema::create('quality_control_assigned', function (Blueprint $table) {
+            $table->engine = 'InnoDB';
             $table->increments('id');
             $table->integer('task_id')->unsigned();
             $table->integer('quality_control_id')->unsigned();
