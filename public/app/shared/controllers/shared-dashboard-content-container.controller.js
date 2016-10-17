@@ -240,10 +240,10 @@ sharedModule
 
 			if($scope.subheader.currentNavItem)
 			{
-				$scope.subheader.currentNavItem = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1].label : $scope.subheader.navs[6].label;
+				$scope.subheader.currentNavItem = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1].label : $scope.subheader.navs[5].label;
 
 				/* Sets up the page for what tab it is*/
-				var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
+				var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[5];
 
 				setInit(nav);
 			}		
@@ -390,7 +390,7 @@ sharedModule
 				})
 		}
 
-		var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[6];
+		var nav = $scope.today.getDay() ? $scope.subheader.navs[$scope.today.getDay() -1] : $scope.subheader.navs[5];
 		
 		$scope.subheader.currentNavItem = nav.label;
 
