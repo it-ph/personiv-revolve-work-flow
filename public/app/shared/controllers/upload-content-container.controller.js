@@ -80,7 +80,6 @@ sharedModule
 			// checks for duplicate file name within the form.
 			angular.forEach($scope.tasks, function(task, key){
 				if(nextLoop && key != idx){
-					console.log(data.file_name == task.file_name);
 					if(data.file_name == task.file_name){
 						duplicate = true;
 						nextLoop = false;
@@ -183,9 +182,10 @@ sharedModule
 		}
 
 		var busy = false;
-		var duplicate = false;	
-
+		
 		$scope.fab.action = function(){
+			var duplicate = false;
+
 			if($scope.form.taskForm.$invalid){
 				angular.forEach($scope.form.taskForm.$error, function(field){
 					angular.forEach(field, function(errorField){
@@ -201,29 +201,24 @@ sharedModule
 					Preloader.alert('Duplicate File Name', item.file_name +' already exists.');
 					duplicate = true;
 				}
-				else{
-					item.delivery_date = item.delivery_date.toDateString();
-					item.live_date = item.live_date.toDateString();
-				}
+				// else{
+				// 	item.delivery_date = item.delivery_date.toDateString();
+				// 	item.live_date = item.live_date.toDateString();
+				// }
 			});
 
 			if(!busy && !duplicate){
 				busy = true;
 				Preloader.preload();
 
+				angular.forEach($scope.tasks, function(item){
+					item.delivery_date = new Date(item.delivery_date);
+					item.live_date = new Date(item.live_date);
+				});
+
 				Task.storeMultiple($scope.tasks)
 					.success(function(data){
 						busy = false;
-						
-						if(data){
-							angular.forEach($scope.tasks, function(item){
-								item.delivery_date = new Date(item.delivery_date);
-								item.live_date = new Date(item.live_date);
-							});
-
-							return;
-						}
-
 						Preloader.stop();
 						$state.go('main.tracker');
 					})

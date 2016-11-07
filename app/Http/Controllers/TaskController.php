@@ -39,7 +39,7 @@ class TaskController extends Controller
      */
     public function storeMultiple(Request $request)
     {
-        $filedSheet = false;
+        $this->filedSheet = false;
 
         for ($i=0; $i < count($request->all()); $i++) { 
             $this->validate($request, [
@@ -51,54 +51,57 @@ class TaskController extends Controller
                 $i.'.spreadsheet_id' => 'required',
             ]);
 
-            $category = Category::where('name', $request->input($i.'.category'))->first();
+            DB::transaction(function() use($request, $i) {
+                $category = Category::where('name', $request->input($i.'.category'))->first();
 
-            if(!$category)
-            {
-                $category = new Category;
-                $category->name = $request->input($i.'.category');
-                $category->save();
-            }
-
-            $client = Client::where('name', $request->input($i.'.client'))->first();
-
-            if(!$client)
-            {
-                $client = new Client;
-                $client->name = $request->input($i.'.client');
-                $client->save();
-            }
-
-            $task = new Task;
-
-            $task->delivery_date = Carbon::parse($request->input($i.'.delivery_date'));
-            $task->live_date = Carbon::parse($request->input($i.'.live_date'));
-            $task->file_name = $request->input($i.'.file_name');
-            $task->client_id = $client->id;
-            $task->category_id = $category->id;
-            $task->status = 'pending';
-            $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
-
-            $task->save();
-
-            if(!$filedSheet){
-                $spreadsheet = Spreadsheet::where('id', $request->input($i.'.spreadsheet_id'))->first();
-
-                $spreadsheet->filed = true;
-
-                $spreadsheet->save();
-
-                $filedSheet = true;
-
-                $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
-
-                foreach ($users as $key => $user) {
-                    // save the notifications to database - spreadsheet, sender
-                    $user->notify(new SpreadsheetCreated($spreadsheet, Auth::user()));
-                    // broadcast the notifications - spreadsheet, sender, recipient
-                    event(new PusherSpreadsheetCreated($spreadsheet, Auth::user(), $user));
+                if(!$category)
+                {
+                    $category = new Category;
+                    $category->name = $request->input($i.'.category');
+                    $category->save();
                 }
-            }
+
+                $client = Client::where('name', $request->input($i.'.client'))->first();
+
+                if(!$client)
+                {
+                    $client = new Client;
+                    $client->name = $request->input($i.'.client');
+                    $client->save();
+                }
+
+                $task = new Task;
+
+                $task->delivery_date = Carbon::parse($request->input($i.'.delivery_date'));
+                $task->live_date = Carbon::parse($request->input($i.'.live_date'));
+                $task->file_name = $request->input($i.'.file_name');
+                $task->client_id = $client->id;
+                $task->category_id = $category->id;
+                $task->status = 'pending';
+                $task->spreadsheet_id = $request->input($i.'.spreadsheet_id');
+
+                $task->save();
+
+                if(!$this->filedSheet){
+                    $spreadsheet = Spreadsheet::where('id', $request->input($i.'.spreadsheet_id'))->first();
+
+                    $spreadsheet->filed = true;
+
+                    $spreadsheet->save();
+
+                    $this->filedSheet = true;
+
+                    $users = User::whereIn('role', ['admin', 'quality_control'])->whereNotIn('id', [$request->user()->id])->get();
+
+                    foreach ($users as $key => $user) {
+                        // save the notifications to database - spreadsheet, sender
+                        $user->notify(new SpreadsheetCreated($spreadsheet, Auth::user()));
+                        // broadcast the notifications - spreadsheet, sender, recipient
+                        event(new PusherSpreadsheetCreated($spreadsheet, Auth::user(), $user));
+                    }
+                }
+            });
+
         }
     }
 
