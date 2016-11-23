@@ -5,7 +5,7 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0">
 	<title>Revolve Tracker | Personiv</title>
 	<!-- Favicon -->
-    <link rel="shortcut icon" href="/assets/img/Personiv-Favicon.png">
+    <link rel="shortcut icon" href="/img/2Color-Favicon_512x512-1-raw.png">
 	<!-- Goolge Fonts Roboto -->
 	<link href='https://fonts.googleapis.com/css?family=Roboto:400,100,100italic,300,300italic,400italic,500,500italic,700,700italic' rel='stylesheet' type='text/css'>
 	<!-- Vendor CSS -->
@@ -18,8 +18,8 @@
 	<div class="main-view no-opacity" ng-controller="homePageController" ng-init="show()" id="main">
 		<md-content flex layout="column" layout-align="center center" class="full-height-min main-content">
 			<a href="/">
-				<img show-gt-md hide-md hide-sm hide-xs src="/img/Personiv-Final_white_transparent.png" alt="Personiv Logo" class="personiv-logo">
-				<img show-xs show-sm show-md hide-gt-md src="/img/Personiv-icon_large-white.png" alt="" class="personiv-logo">
+				<img show-gt-md hide-md hide-sm src="/img/2Color-Logo_247px-1024x195_white.png" alt="Personiv Logo" class="personiv-logo">
+				<img show-sm show-md hide-gt-md src="/img/2Color-Favicon_512x512-1-raw_white.png" alt="" class="personiv-logo">
 			</a>
 			<br>
 			@if (count($errors) > 0)
