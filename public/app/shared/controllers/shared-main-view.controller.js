@@ -269,7 +269,7 @@ sharedModule
 
 				$scope.user = data;
 
-				var pusher = new Pusher('7c041c12ae347877d32d', {
+				var pusher = new Pusher('b4fe17042b61e0b10730', {
 			      encrypted: true
 			    });
 
